@@ -52,10 +52,14 @@ jobs:
       - name: Terraform Apply
         run: terraform -chdir=terraform apply -auto-approve -var="key_name=${{ env.KEY_NAME }}"
 
-      - name: Obtener la id del Security Group de la instancia EC2
+      - name: Obtener Outputs de Terraform
         run: |
           cd terraform
+          INSTANCE_ID=$(terraform output -raw instance_id)
+          PUBLIC_IP=$(terraform output -raw public_ip)
           SECURITY_GROUP_ID=$(terraform output -raw security_group_id)
+          echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
           echo "SECURITY_GROUP_ID=$SECURITY_GROUP_ID" >> $GITHUB_ENV
 
       - name: Whitelist Runner IP Address
@@ -65,12 +69,6 @@ jobs:
             --protocol tcp \
             --port 22 \
             --cidr ${{ steps.runner_ip.outputs.ipv4 }}/32
-
-      - name: Obtener la dirección IP pública de EC2
-        run: |
-          cd terraform
-          PUBLIC_IP=$(terraform output -raw public_ip)
-          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
       - name: Esperar a que la instancia EC2 esté disponible
         run: |
