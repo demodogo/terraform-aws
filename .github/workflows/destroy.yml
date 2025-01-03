@@ -1,4 +1,5 @@
 name: Destroy Resources
+
 on:
   workflow_run:
     workflows: ["Terraform Infra (AWS Resources)"]

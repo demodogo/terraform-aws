@@ -140,3 +140,9 @@ jobs:
             --protocol tcp \
             --port 22 \
             --cidr ${{ steps.runner_ip.outputs.ipv4 }}/32
+
+      - name: Sleep for 5 min
+        run: sleep 300
+
+      - name: Terraform Destroy
+        run: terraform -chdir=terraform destroy -auto-approve
