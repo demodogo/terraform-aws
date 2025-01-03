@@ -69,7 +69,6 @@ jobs:
             --protocol tcp \
             --port 22 \
             --cidr ${{ steps.runner_ip.outputs.ipv4 }}/32
-          
 
       - name: Obtener la dirección IP pública de EC2
         run: |
@@ -115,9 +114,6 @@ jobs:
       - name: Verificar que la API está activa
         run: |
           curl -I http://${{ env.PUBLIC_IP }}:3000/api
-      - name: Eliminar claves SSH temporales
-        run: |
-          rm -f ddg-dl-temp ddg-dl-temp.pub
 
       - name: Eliminar claves SSH temporales
         run: |
