@@ -4,13 +4,17 @@ on:
   push:
     branches:
       - test
-
 jobs:
-  setup-and-deploy:
+  setup-infra:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Get Runner IP Address
+        id: runner_ip
+        uses: haythem/public-ip@v1.3
 
       - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -18,12 +22,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.0
-          terraform_wrapper: true
 
       - name: Generate SSH Key Pair
         run: |
@@ -40,27 +38,31 @@ jobs:
             --key-name ${{ env.KEY_NAME }} \
             --public-key-material "$(base64 -w 0 ddg-dl-temp.pub)"
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
       - name: Terraform Init
         run: terraform -chdir=terraform init
 
       - name: Terraform Plan
-        id: terraform-plan
-        run: |
-          terraform -chdir=terraform plan -var "key_name=${{ env.KEY_NAME }}"
+        run: terraform -chdir=terraform plan -var="key_name=${{ env.KEY_NAME }}"
 
       - name: Terraform Apply
-        id: terraform-apply
-        run: terraform -chdir=terraform apply -auto-approve -var "key_name=${{ env.KEY_NAME }}"
+        run: terraform -chdir=terraform apply -auto-approve -var="key_name=${{ env.KEY_NAME }}"
 
-      - name: Obtener la id del Security Group de la instancia EC2
+      - name: Obtener id del Security Group
         run: |
           cd terraform
-          SECURITY_GROUP_ID=$(terraform output -raw security_group_id)
+          SECURITY_GROUP_ID=$(terraform output -raw security_group_id | tr -d '\n' | tr -d '\r')
           echo "SECURITY_GROUP_ID=$SECURITY_GROUP_ID" >> $GITHUB_ENV
 
-      - name: Get Runner IP Address
-        id: runner_ip
-        uses: haythem/public-ip@v1.3
+      - name: Obtener la dirección IP pública de EC2
+        run: |
+          cd terraform
+          PUBLIC_IP=$(terraform output -raw public_ip | tr -d '\n' | tr -d '\r')
+          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
       - name: Whitelist Runner IP Address
         run: |
@@ -69,13 +71,6 @@ jobs:
             --protocol tcp \
             --port 22 \
             --cidr ${{ steps.runner_ip.outputs.ipv4 }}/32
-          
-
-      - name: Obtener la dirección IP pública de EC2
-        run: |
-          cd terraform
-          PUBLIC_IP=$(terraform output -raw public_ip)
-          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
       - name: Esperar a que la instancia EC2 esté disponible
         run: |
@@ -115,9 +110,6 @@ jobs:
       - name: Verificar que la API está activa
         run: |
           curl -I http://${{ env.PUBLIC_IP }}:3000/api
-      - name: Eliminar claves SSH temporales
-        run: |
-          rm -f ddg-dl-temp ddg-dl-temp.pub
 
       - name: Eliminar claves SSH temporales
         run: |
