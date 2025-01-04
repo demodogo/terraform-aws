@@ -54,12 +54,29 @@ module "route_table" {
   name                = var.public_route_table_name
 }
 
+module "iam" {
+    source = "./modules/iam"
+}
+
+module "sns" {
+  source = "./modules/sns"
+  sns_topic_name = var.sns_topic_name
+  subscriber_email = var.subscriber_email
+}
 module "ec2" {
   source            = "./modules/ec2"
   ami_id            = var.ami_id
+  iam_instance_profile = module.iam.role_name
   instance_type     = "t2.micro"
   subnet_id         = module.subnet.public_subnet_id
   security_group_id = module.sg.security_group_id
   name              = var.ec2_name
   key_name          = var.key_name
+}
+
+
+module "cloudwatch" {
+  source = "./modules/cloudwatch"
+  instance_id = module.ec2.instance_id
+  sns_topic_arn = module.sns.sns_topic_arn
 }

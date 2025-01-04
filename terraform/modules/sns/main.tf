@@ -1,6 +1,6 @@
 # Crear el topic SNS para enviar notificaciones
 resource "aws_sns_topic" "alarm_notifications" {
-  name = "alarm-notifications-topic"
+  name = var.sns_topic_name
 }
 
 # Suscripción por correo electrónico

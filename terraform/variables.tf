@@ -47,6 +47,16 @@ variable "sg_name" {
   default     = "tf-main-sg"
 }
 
+variable "sns_topic_name" {
+    description = "Nombre del topic SNS"
+    type        = string
+    default     = "tf-alarm-notifications"
+}
+
+variable "subscriber_email" {
+    description = "Correo electrónico para suscripción"
+    type        = string
+}
 
 variable "my_ip" {
   description = "My IP"
