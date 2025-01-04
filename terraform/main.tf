@@ -66,12 +66,15 @@ module "sns" {
 module "ec2" {
   source            = "./modules/ec2"
   ami_id            = var.ami_id
-  iam_instance_profile = module.iam.role_name
+  iam_instance_profile = module.iam.instance_profile_name
   instance_type     = "t2.micro"
   subnet_id         = module.subnet.public_subnet_id
   security_group_id = module.sg.security_group_id
   name              = var.ec2_name
   key_name          = var.key_name
+
+  depends_on = [module.iam]
+
 }
 
 
