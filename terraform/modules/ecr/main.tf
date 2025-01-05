@@ -23,7 +23,9 @@ resource "aws_ecr_repository_policy" "policy" {
           "ecr:PutImage",
           "ecr:InitiateLayerUpload",
           "ecr:UploadLayerPart",
-          "ecr:CompleteLayerUpload"
+          "ecr:CompleteLayerUpload",
+          "ecr:DescribeImageScanFindings",
+          "ecr:StartImageScan"
         ]
       }
     ]
