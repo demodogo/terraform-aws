@@ -8,6 +8,8 @@ on:
 jobs:
   setup-and-deploy:
     runs-on: ubuntu-latest
+    outputs:
+      ecr_name: ${{ steps.get-ecr-name.outputs.ecr_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -15,7 +17,7 @@ jobs:
       - name: Delete existing artifact
         uses: geekyeggo/delete-artifact@v5
         with:
-          name: lambda-info
+          name: sqs-info
           failOnError: false
 
       - name: Set up AWS credentials
@@ -152,8 +154,46 @@ jobs:
           cd terraform
           terraform output -raw sqs_url > sqs-info.txt
 
+      - name: Get ECR Name
+        id: get-ecr-name
+        run: |
+          ECR_NAME=$(terraform output -raw repository_name)
+          echo "::set-output name=ecr_name::$ECR_NAME"
+
       - name: Upload new artifact
         uses: actions/upload-artifact@v3
         with:
           name: sqs-info
           path: terraform/sqs-info.txt
+
+  security-scans:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Terraform Scan
+        uses: snyk/actions/terraform@v1
+        with:
+          file: terraform/main.tf
+          args: --json
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk Docker Scan
+        uses: snyk/actions/docker@v1
+        with:
+          image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/dl-web-app:latest
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: ECR Image Scan
+        run: |
+          aws ecr start-image-scan --repository-name ${{ needs.setup-and-deploy.outputs.ecr_name }} --image-id imageTag=latest
