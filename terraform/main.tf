@@ -63,7 +63,7 @@ module "sns" {
   source = "./modules/sns"
   sns_topic_name = var.sns_topic_name
   subscriber_email = var.subscriber_email
-  subscriber_email_lambda = "macaigm@gmail.com"
+  subscriber_email_lambda = var.subscriber_email_lambda
   sns_lambda_topic_name = var.sns_lambda_topic_name
 }
 
@@ -88,7 +88,6 @@ module "ec2" {
   depends_on = [module.iam]
 
 }
-
 
 module "cloudwatch" {
   source = "./modules/cloudwatch"

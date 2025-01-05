@@ -1,7 +1,7 @@
 # Comprimir archivo .py que tiene la función
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_dir  = "${path.module}/lambda_func" # Carpeta con tu código
+  source_dir  = "${path.module}/lambda_func"
   output_path = "${path.module}/terraform/modules/lambda/lambda.zip"
 }
 
