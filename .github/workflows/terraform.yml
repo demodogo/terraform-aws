@@ -92,6 +92,12 @@ jobs:
           PUBLIC_IP=$(terraform output -raw public_ip)
           echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
+      - name: Get ECR Name
+        id: get-ecr-name
+        run: |
+          ECR_NAME=$(terraform output -raw repository_name)
+          echo "ECR_NAME=$ECR_NAME" >> $GITHUB_ENV
+
       - name: Esperar a que la instancia EC2 esté disponible
         run: |
           aws ec2 wait instance-status-ok --instance-ids ${{ env.INSTANCE_ID }}
@@ -158,7 +164,7 @@ jobs:
 
       - name: ECR Image Scan
         run: |
-          aws ecr start-image-scan --repository-name ${{ needs.setup-and-deploy.outputs.ecr_name }} --image-id imageTag=latest
+          aws ecr start-image-scan --repository-name ${{ env.ECR_NAME }} --image-id imageTag=latest
 
       - name: Revoke Runner IP Address
         run: |
@@ -172,12 +178,6 @@ jobs:
         run: |
           cd terraform
           terraform output -raw sqs_url > sqs-info.txt
-
-      - name: Get ECR Name
-        id: get-ecr-name
-        run: |
-          ECR_NAME=$(terraform output -raw repository_name)
-          echo "::set-output name=ecr_name::$ECR_NAME"
 
       - name: Upload new artifact
         uses: actions/upload-artifact@v3
