@@ -169,7 +169,7 @@ jobs:
         id: docker-scan
         uses: alexjurkiewicz/ecr-scan-image@v3.0.0
         with:
-          repository: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ECR_NAME }}
+          repository: ${{ env.ECR_NAME }}
           tag: latest
           fail_threshold: high
 
