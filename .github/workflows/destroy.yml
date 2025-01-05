@@ -2,7 +2,7 @@ name: Destroy Resources
 
 on:
   workflow_run:
-    workflows: [""]
+    workflows: ["Terraform Infra (AWS Resources)"]
     types: [completed]
 
 jobs:
