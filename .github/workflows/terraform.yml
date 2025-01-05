@@ -93,10 +93,10 @@ jobs:
           echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
       - name: Get ECR Name
-        id: get-ecr-name
         run: |
+          cd terraform
           ECR_NAME=$(terraform output -raw repository_name)
-          echo "ECR_NAME=$ECR_NAME" >> $GITHUB_ENV
+          echo "ECR_NAME=ECR_NAME" >> $GITHUB_ENV
 
       - name: Esperar a que la instancia EC2 esté disponible
         run: |
