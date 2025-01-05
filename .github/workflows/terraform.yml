@@ -150,7 +150,7 @@ jobs:
       - name: Build/Tag Docker Image
         run: |
           docker build -t dl-web-app:latest .
-          docker tag dl-web-app:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/dl-web-app-ecr:latest
+          docker tag dl-web-app:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ECR_NAME }}:latest
 
       - name: Run Snyk Docker Scan
         continue-on-error: true
@@ -163,11 +163,15 @@ jobs:
 
       - name: Push Docker Image to ECR
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/dl-web-app-ecr:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ECR_NAME }}:latest
 
-      - name: ECR Image Scan
-        run: |
-          aws ecr start-image-scan --repository-name ${{ env.ECR_NAME }} --image-id imageTag=latest
+      - name: AWS Scan Docker image
+        id: docker-scan
+        uses: alexjurkiewicz/ecr-scan-image@v3.0.0
+        with:
+          repository: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ECR_NAME }}
+          tag: latest
+          fail_threshold: high
 
       - name: Revoke Runner IP Address
         run: |
