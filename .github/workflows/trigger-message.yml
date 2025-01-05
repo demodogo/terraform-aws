@@ -2,8 +2,8 @@ name: Send SQS Message from Commit Message
 
 on:
   push:
-    branches:
-      - trigger-sqs
+    paths:
+      - "lambda_func/sqs_message.txt"
 jobs:
   send-message:
     runs-on: ubuntu-latest
@@ -18,6 +18,14 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
+
+
+      - name: Read Default Message
+        id: read-message
+        run: |
+          MESSAGE=$(cat lambda_func/sqs_message.txt)
+          echo "MESSAGE=$MESSAGE" >> $GITHUB_ENV
+          echo "Message to send: $MESSAGE"
 
       - name: Parse Commit Message
         id: parse_message
@@ -41,5 +49,5 @@ jobs:
       - name: Send Message to SQS
         run: |
           aws sqs send-message \
-            --queue-url "$SQS_URL" \
-            --message-body "{\"commit_message\": \"$COMMIT_MESSAGE\"}"
+            --queue-url "${{ env.SQS_URL }}" \
+            --message-body "{\"commit_message\": \"${{ env.COMMIT_MESSAGE }}\", \"text_message\": \"${{ env.MESSAGE }}\"}"
