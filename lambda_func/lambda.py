@@ -12,8 +12,10 @@ def lambda_handler(event, context):
         payload = record["body"]
         try:
             payload = json.loads(payload)
-            print(f"Mensaje recibido: {payload} ")
-            response = client.publish(TopicArn=SNS_TOPIC_ARN,Message="Mensajes de SQS procesados con éxito.")
+            commit_message = payload.get("commit_message", "No commit message found")
+            print(f"Mensaje recibido: {commit_message} ")
+            response = client.publish(TopicArn=SNS_TOPIC_ARN,Message="Mensaje procesado con éxito: " + commit_message)
+            print(f"Mensaje enviado a SNS: {response}")
         except json.JSONDecodeError:
             print(f"El mensaje no es un JSON válido: {payload}")
 

@@ -1,0 +1,45 @@
+name: Send SQS Message from Commit Message
+
+on:
+  push:
+    branches:
+      - trigger-sqs
+jobs:
+  send-message:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Parse Commit Message
+        id: parse_message
+        run: |
+          echo "COMMIT_MESSAGE=$(git log -1 --pretty="Commit: %h%nAuthor: %an%nDate: %ad%nMessage: %s")" >> $GITHUB_ENV
+          echo "Commit Message: $COMMIT_MESSAGE"
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: sqs-info
+          path: .
+
+      - name: Read SQS URL
+        id: read_sqs
+        run: |
+          SQS_URL=$(cat sqs-info.txt)
+          echo "SQS_URL=$SQS_URL" >> $GITHUB_ENV
+          echo "SQS URL: $SQS_URL">
+
+      - name: Send Message to SQS
+        run: |
+          aws sqs send-message \
+            --queue-url "$SQS_URL" \
+            --message-body "{\"commit_message\": \"$COMMIT_MESSAGE\"}"

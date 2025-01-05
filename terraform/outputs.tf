@@ -13,3 +13,7 @@ output "security_group_id" {
 output "lambda_arn" {
   value = module.lambda.lambda_arn
 }
+
+output "sqs_url" {
+  value = module.sqs.sqs_url
+}
