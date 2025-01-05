@@ -158,6 +158,8 @@ jobs:
         with:
           image: dl-web-app
           args: --file=Dockerfile
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Push Docker Image to ECR
         run: |
