@@ -2,6 +2,9 @@ resource "aws_ecr_repository" "ecr_repository" {
   name                 = var.ecr_name
   image_tag_mutability = "MUTABLE"
   force_delete = true
+  image_scanning_configuration {
+    scan_on_push = true
+  }
 }
 
 resource "aws_ecr_repository_policy" "policy" {
@@ -23,7 +26,10 @@ resource "aws_ecr_repository_policy" "policy" {
           "ecr:PutImage",
           "ecr:InitiateLayerUpload",
           "ecr:UploadLayerPart",
-          "ecr:CompleteLayerUpload"
+          "ecr:CompleteLayerUpload",
+          "ecr:DescribeRepositories",
+          "ecr:DescribeImageScanFindings",
+          "ecr:StartImageScan"
         ]
       }
     ]

@@ -8,6 +8,11 @@ variable "instance_type" {
   type        = string
 }
 
+variable "iam_instance_profile" {
+  description = "Nombre del IAM Instance Profile"
+  type        = string
+}
+
 variable "subnet_id" {
   description = "ID de la subnet donde se lanzará la instancia"
   type        = string

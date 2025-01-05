@@ -8,12 +8,14 @@ on:
 jobs:
   setup-and-deploy:
     runs-on: ubuntu-latest
+    outputs:
+      ecr_name: ${{ steps.get-ecr-name.outputs.ecr_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -42,6 +44,15 @@ jobs:
 
       - name: Terraform Init
         run: terraform -chdir=terraform init
+
+      - name: Terraform Scan
+        uses: snyk/actions/iac@master
+        continue-on-error: true
+        with:
+          file: terraform/
+          json: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Terraform Plan
         id: terraform-plan
@@ -75,6 +86,12 @@ jobs:
           cd terraform
           PUBLIC_IP=$(terraform output -raw public_ip)
           echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+
+      - name: Get ECR Name
+        run: |
+          cd terraform
+          ECR_NAME=$(terraform output -raw repository_name)
+          echo "ECR_NAME=$ECR_NAME" >> $GITHUB_ENV 
 
       - name: Esperar a que la instancia EC2 esté disponible
         run: |
@@ -127,11 +144,62 @@ jobs:
       - name: Build/Tag Docker Image
         run: |
           docker build -t dl-web-app:latest .
-          docker tag dl-web-app:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/dl-web-app-ecr:latest
+          docker tag dl-web-app:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ECR_NAME }}:latest
+
+      - name: Run Snyk Docker Scan
+        continue-on-error: true
+        uses: snyk/actions/docker@master
+        with:
+          image: dl-web-app
+          args: --file=Dockerfile --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Push Docker Image to ECR
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/dl-web-app-ecr:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ECR_NAME }}:latest
+
+      - name: AWS Scan Docker image
+        id: docker-scan
+        run: |
+            aws ecr start-image-scan --repository-name ${{ env.ECR_NAME }} --image-id imageTag=latest
+
+      - name: Wait for ECR Image Scan Results
+        run: |
+          for i in {1..10}; do
+            SCAN_STATUS=$(aws ecr describe-image-scan-findings \
+            --repository-name dl-web-app-ecr \
+            --image-id imageTag=latest \
+            --query 'imageScanStatus.status' \
+            --output json)
+          
+          
+            echo "Current scan status: $SCAN_STATUS"
+          
+            if [ "$SCAN_STATUS" = "\"COMPLETE\"" ]; then
+              echo "Scan completed successfully."
+              exit 0
+            elif [ "$SCAN_STATUS" = "\"FAILED\"" ]; then
+              echo "Scan failed."
+              exit 1
+            fi
+          
+            echo "Waiting for scan to complete..."
+            sleep 30
+          done
+          
+          echo "Scan did not complete within the expected time."
+          exit 1
+
+      - name: Get ECR Image Scan Findings
+        run: |
+          aws ecr describe-image-scan-findings \
+            --repository-name dl-web-app-ecr \
+            --image-id imageTag=latest \
+            --output json > findings.json
+          
+           jq '.imageScanFindings.findings[] | {name, severity}' findings.json
+
 
       - name: Revoke Runner IP Address
         run: |
@@ -140,9 +208,3 @@ jobs:
             --protocol tcp \
             --port 22 \
             --cidr ${{ steps.runner_ip.outputs.ipv4 }}/32
-
-      - name: Sleep for 5 min
-        run: sleep 300
-
-      - name: Terraform Destroy
-        run: terraform -chdir=terraform destroy -auto-approve
