@@ -48,7 +48,7 @@ jobs:
       - name: Terraform Scan
         uses: snyk/actions/iac@master
         with:
-          file: terraform/main.tf
+          file: terraform/
           json: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -150,7 +150,7 @@ jobs:
         uses: snyk/actions/docker@master
         with:
           image: dl-web-app
-          args: --file=Dockerfile
+          args: --file=Dockerfile --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -197,7 +197,9 @@ jobs:
             --image-id imageTag=latest \
             --output json > findings.json
           
-          cat findings.json
+           jq '.imageScanFindings.findings[] | {name, severity}' findings.json
+
+
 
       - name: Revoke Runner IP Address
         run: |
