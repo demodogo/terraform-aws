@@ -90,8 +90,7 @@ jobs:
         run: |
           cd terraform
           ECR_NAME=$(terraform output -raw repository_name)
-          echo "ECR_NAME=$ECR_NAME" >> $GITHUB_ENV
-      
+          echo "ECR_NAME=$ECR_NAME" >> $GITHUB_ENV 
 
       - name: Esperar a que la instancia EC2 esté disponible
         run: |
@@ -171,15 +170,15 @@ jobs:
             --repository-name dl-web-app-ecr \
             --image-id imageTag=latest \
             --query 'imageScanStatus.status' \
-            --output json | jq -r '.')
+            --output json)
           
           
             echo "Current scan status: $SCAN_STATUS"
           
-            if [ "$SCAN_STATUS" = "COMPLETE" ]; then
+            if [ "$SCAN_STATUS" = "\"COMPLETE\"" ]; then
               echo "Scan completed successfully."
               exit 0
-            elif [ "$SCAN_STATUS" = "FAILED" ]; then
+            elif [ "$SCAN_STATUS" = "\"FAILED\"" ]; then
               echo "Scan failed."
               exit 1
             fi
