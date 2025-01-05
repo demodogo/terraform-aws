@@ -12,6 +12,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Delete existing artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: lambda-info
+          failOnError: false
+
       - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -144,5 +150,13 @@ jobs:
       - name: Sleep for 5 min
         run: sleep 300
 
-      - name: Terraform Destroy
-        run: terraform -chdir=terraform destroy -auto-approve
+      - name: Get Lambda ARN
+        run: |
+          cd terraform
+          terraform output -raw lambda_arn > lambda_arn.txt
+
+      - name: Upload new artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: lambda-info
+          path: terraform/lambda_arn.txt

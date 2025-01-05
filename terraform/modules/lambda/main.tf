@@ -21,7 +21,7 @@ resource "aws_lambda_function" "lambda_function" {
 }
 
 resource "aws_lambda_event_source_mapping" "sqs_trigger" {
-  event_source_arn = var.lambda_sns_topic_arn
+  event_source_arn = var.lambda_sqs_queue_arn
   function_name    = aws_lambda_function.lambda_function.arn
   batch_size       = 5
 }

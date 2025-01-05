@@ -70,9 +70,9 @@ module "sns" {
 module "lambda" {
   source = "./modules/lambda"
   lambda_exec_role_arn = module.iam.lambda_exc_role_arn
+  lambda_sqs_queue_arn = module.sqs.sqs_arn
   lambda_sns_topic_arn = module.sns.sns_lambda_topic_arn
-
-  depends_on = [module.iam, module.sns]
+  depends_on = [module.iam, module.sns, module.sqs]
 }
 
 module "ec2" {
@@ -97,5 +97,4 @@ module "cloudwatch" {
 
 module "sqs" {
   source = "./modules/sqs"
-  lambda_function_name = module.lambda.lambda_func_name
 }
