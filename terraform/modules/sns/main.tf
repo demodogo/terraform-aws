@@ -12,7 +12,7 @@ resource "aws_sns_topic_subscription" "email_subscription" {
 
 # SNS Lambda
 resource "aws_sns_topic" "lambda_topic" {
-  name = "lambda-notifications-topic"
+  name = var.sns_lambda_topic_name
 }
 
 # Suscripción para SNS (lambda)

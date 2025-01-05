@@ -64,6 +64,7 @@ module "sns" {
   sns_topic_name = var.sns_topic_name
   subscriber_email = var.subscriber_email
   subscriber_email_lambda = "macaigm@gmail.com"
+  sns_lambda_topic_name = var.sns_lambda_topic_name
 }
 
 module "lambda" {
@@ -71,7 +72,7 @@ module "lambda" {
   lambda_exec_role_arn = module.iam.lambda_exc_role_arn
   lambda_sns_topic_arn = module.sns.sns_lambda_topic_arn
 
-  depends_on = [module.iam]
+  depends_on = [module.iam, module.sns]
 }
 
 module "ec2" {

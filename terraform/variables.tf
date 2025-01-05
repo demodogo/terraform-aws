@@ -58,6 +58,11 @@ variable "subscriber_email" {
     type        = string
 }
 
+variable "sns_lambda_topic_name" {
+  description = "Nombre del SNS para lambda"
+  type = string
+}
+
 variable "my_ip" {
   description = "My IP"
   type        = string

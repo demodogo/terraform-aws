@@ -12,3 +12,8 @@ variable "subscriber_email_lambda" {
     description = "Subscriber email for lambda/sns/sqs"
     type = string
 }
+
+variable "sns_lambda_topic_name" {
+    description = "Lambda SNS topic name"
+    type = string
+}

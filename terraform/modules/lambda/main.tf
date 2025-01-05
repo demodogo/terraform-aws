@@ -10,8 +10,8 @@ resource "aws_lambda_function" "lambda_function" {
   role             = var.lambda_exec_role_arn
   handler          = "lambda.lambda_handler"
   runtime          = "python3.9"
-  filename         = "lambda_function.zip"
-  source_code_hash = filebase64sha256("lambda_function.zip")
+  filename          = data.archive_file.lambda_zip.output_path
+  source_code_hash =  data.archive_file.lambda_zip.output_base64sha256
   timeout = 10
   environment {
     variables = {
