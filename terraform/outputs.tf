@@ -10,3 +10,6 @@ output "security_group_id" {
   value = module.sg.security_group_id
 }
 
+output "lambda_arn" {
+  value = module.lambda.lambda_arn
+}
