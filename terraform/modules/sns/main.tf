@@ -9,3 +9,16 @@ resource "aws_sns_topic_subscription" "email_subscription" {
   protocol  = "email"
   endpoint  = var.subscriber_email
 }
+
+# SNS Lambda
+resource "aws_sns_topic" "lambda_topic" {
+  name = "lambda-notifications-topic"
+}
+
+# Suscripción para SNS (lambda)
+resource "aws_sns_topic_subscription" "email_subscription_lambda" {
+  topic_arn = aws_sns_topic.lambda_topic.arn
+  protocol  = "email"
+  endpoint  = var.subscriber_email_lambda
+
+}

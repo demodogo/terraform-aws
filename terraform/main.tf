@@ -58,11 +58,22 @@ module "iam" {
     source = "./modules/iam"
 }
 
+
 module "sns" {
   source = "./modules/sns"
   sns_topic_name = var.sns_topic_name
   subscriber_email = var.subscriber_email
+  subscriber_email_lambda = "macaigm@gmail.com"
 }
+
+module "lambda" {
+  source = "./modules/lambda"
+  lambda_exec_role_arn = module.iam.lambda_exc_role_arn
+  lambda_sns_topic_arn = module.sns.sns_lambda_topic_arn
+
+  depends_on = [module.iam]
+}
+
 module "ec2" {
   source            = "./modules/ec2"
   ami_id            = var.ami_id
@@ -82,4 +93,9 @@ module "cloudwatch" {
   source = "./modules/cloudwatch"
   instance_id = module.ec2.instance_id
   sns_topic_arn = module.sns.sns_topic_arn
+}
+
+module "sqs" {
+  source = "./modules/sqs"
+  lambda_function_name = module.lambda.lambda_func_name
 }
