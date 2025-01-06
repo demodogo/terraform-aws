@@ -153,6 +153,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - setup-security-group
+    outputs:
+      key_name: ${{ steps.get-key-name.outputs.key_name }}
     env:
       security_group_id: ${{ needs.setup-security-group.outputs.security_group_id }}
     steps:
@@ -171,9 +173,10 @@ jobs:
           ssh-keygen -t rsa -b 2048 -f ddg-dl-temp -N "" -q
           echo "Claves generadas"
 
-      - name: Set key name in environment
+      - name: Set key name in output
+        id: get-key-name
         run: |
-          echo "KEY_NAME=temp-key-${{ github.run_id }}" >> $GITHUB_ENV
+          echo "key_name=temp-key-${{ github.run_id }}" >> GITHUB_OUTPUT
 
       - name: Import Public Key to AWS
         run: |
@@ -214,7 +217,7 @@ jobs:
         id: get-instance-id
         run: |
           INSTANCE_ID=$(terraform -chdir=terraform output -raw instance_id)
-          echo "instance_id=$INSTANCE_ID" >> $GITHUB_ENV
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
 
       - name: Get Runner IP Address
         id: runner_ip
@@ -223,7 +226,7 @@ jobs:
       - name: Whitelist Runner IP Address
         run: |
           aws ec2 authorize-security-group-ingress \
-            --group-id ${{ env.security_group_id }} \
+            --group-id ${{ steps.get-key-name.outputs.key_name }} \
             --protocol tcp \
             --port 22 \
             --cidr ${{ steps.runner_ip.outputs.ipv4 }}/32
@@ -275,6 +278,8 @@ jobs:
   create-cloudwatch-alarms:
     needs: setup-and-deploy-ec2
     runs-on: ubuntu-latest
+    env:
+        key_name: ${{ needs.setup-and-deploy-ec2.outputs.key_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -285,21 +290,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Generate SSH Key Pair
-        run: |
-          ssh-keygen -t rsa -b 2048 -f ddg-dl-temp -N "" -q
-          echo "Claves generadas"
-
-      - name: Set key name in environment
-        run: |
-          echo "KEY_NAME=temp-key-${{ github.run_id }}" >> $GITHUB_ENV
-
-      - name: Import Public Key to AWS
-        run: |
-          aws ec2 import-key-pair \
-            --key-name ${{ env.KEY_NAME }} \
-            --public-key-material "$(base64 -w 0 ddg-dl-temp.pub)"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -314,7 +304,7 @@ jobs:
         id: terraform-plan-alarms
         run: |
           terraform -chdir=terraform plan \
-          -var "key_name=${{ env.KEY_NAME }}" \
+          -var "key_name=${{ env.key_name }}" \
           -target=module.sns.aws_sns_topic.alarm_notifications \
           -target=module.sns.aws_sns_topic_subscription.email_subscription \
           -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage \
@@ -326,9 +316,10 @@ jobs:
         id: terraform-apply-alarms
         run: |
           terraform -chdir=terraform apply -auto-approve \
-          -var "key_name=${{ env.KEY_NAME }}" \
+          -var "key_name=${{ env.key_name }}" \
           -target=module.sns.aws_sns_topic.alarm_notifications \
           -target=module.sns.aws_sns_topic_subscription.email_subscription \
           -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage \
           -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_network_in \
           -target=module.cloudwatch.aws_cloudwatch_metric_alarm.status_check_failed
+
