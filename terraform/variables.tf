@@ -60,7 +60,7 @@ variable "public_subnet_id" {
 variable "private_subnet_name" {
   description = "Nombre de la subnet privada"
   type        = string
-  default     = "tf-private-subnet"
+  nullable = true
 }
 
 variable "private_subnet_id" {
