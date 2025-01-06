@@ -284,7 +284,7 @@ jobs:
       - name: Whitelist Runner IP Address
         run: |
           aws ec2 authorize-security-group-ingress \
-            --group-id ${{ needs.setup-security-group.outputs.security_group_id }} \
+            --group-id ${{ env.security_group_id }} \
             --protocol tcp \
             --port 22 \
             --cidr ${{ steps.runner_ip.outputs.ipv4 }}/32

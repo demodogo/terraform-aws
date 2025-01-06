@@ -41,7 +41,7 @@ variable "vpc_name" {
 variable "vpc_id" {
   description = "ID de la VPC"
   type        = string
-  default     = "tf-vpc"
+  default     = module.vpc.vpc_id
 }
 
 variable "public_subnet_name" {
