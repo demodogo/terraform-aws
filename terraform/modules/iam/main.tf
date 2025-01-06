@@ -71,7 +71,10 @@ resource "aws_iam_policy" "lambda_execution_policy" {
           "sqs:DeleteMessage",
           "sqs:GetQueueAttributes",
           "sqs:ReceiveMessage",
-          "sns:Publish"
+          "sns:Publish",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
         ]
         Resource = "*"
       }
