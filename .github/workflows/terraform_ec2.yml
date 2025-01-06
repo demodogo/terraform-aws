@@ -176,7 +176,7 @@ jobs:
           SECURITY_GROUP_ID=$(terraform -chdir=terraform output -raw security_group_id)
           echo "security_group_id=$SECURITY_GROUP_ID" >> $GITHUB_OUTPUT
 
-  setup-ec2-infra:
+  setup-and-deploy-ec2:
     runs-on: ubuntu-latest
     needs:
       - setup-security-group
@@ -255,28 +255,6 @@ jobs:
           INSTANCE_ID=$(terraform -chdir=terraform output -raw instance_id)
           echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
 
-  deploy-app:
-    runs-on: ubuntu-latest
-    needs: setup-ec2-infra
-    env:
-      security_group_id: ${{ needs.setup-ec2-infra.outputs.security_group_id }}
-      instance_public_ip: ${{ needs.setup-ec2-infra.outputs.instance_public_ip }}
-      instance_id: ${{ needs.setup-ec2-infra.outputs.instance_id }}
-    steps:
-      - name: Debug Security Group ID
-        run: |
-         echo "Security Group ID: ${{ env.security_group_id }}"
-
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
-
       - name: Get Runner IP Address
         id: runner_ip
         uses: haythem/public-ip@v1.3
@@ -291,7 +269,7 @@ jobs:
 
       - name: Esperar a que la instancia EC2 esté disponible
         run: |
-          aws ec2 wait instance-status-ok --instance-ids ${{ env.instance_id }}
+          aws ec2 wait instance-status-ok --instance-ids ${{ steps.get-instance-id.outputs.instance_id }}
           echo "La instancia EC2 está lista."
 
       - name: Instalar rsync
@@ -308,11 +286,11 @@ jobs:
             --exclude 'terraform' \
             --exclude 'ddg-dl-temp' \
             --exclude 'ddg-dl-temp.pub' \
-            -e "ssh -i ddg-dl-temp -o StrictHostKeyChecking=no" ./ ec2-user@${{ env.instance_public_ip }}:/home/ec2-user/app/
+            -e "ssh -i ddg-dl-temp -o StrictHostKeyChecking=no" ./ ec2-user@${{ steps.get-public-ip.outputs.instance_public_ip }}:/home/ec2-user/app/
 
       - name: Desplegar aplicación en EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ddg-dl-temp ec2-user@${{ env.instance_public_ip }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ddg-dl-temp ec2-user@${{ steps.get-public-ip.outputs.instance_public_ip }} << 'EOF'
             sudo yum update -y
             sudo yum install -y nodejs
             sudo npm install -g pm2
@@ -326,7 +304,7 @@ jobs:
 
       - name: Verificar que la API está activa
         run: |
-          curl -I http://${{ env.instance_public_ip }}:3000/api
+          curl -I http://${{ steps.get-public-ip.outputs.instance_public_ip }}:3000/api
 
       - name: Eliminar claves SSH temporales
         run: |
