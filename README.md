@@ -42,7 +42,8 @@
   *Para ambos recursos, es suficiente la configuración básica*
 
 2. #### *Pasos para la ejecución*
-* *Configura el backend en Terraform*: Edita el archivo *terraform/main.tf* para que el backend apunte a los servicios que creaste previamente en *AWS*:
+* *Configura el backend en Terraform*.
+   Edita el archivo *terraform/main.tf* para que el backend apunte a los servicios que creaste previamente en *AWS*:
 
   ```terraform
   terraform {
