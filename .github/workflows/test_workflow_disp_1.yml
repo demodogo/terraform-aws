@@ -1,0 +1,31 @@
+name: Workflow 1
+
+on:
+  push:
+    branches:
+      - mejora-continua
+
+jobs:
+  test-workflow-dispatch:
+    runs-on: ubuntu-latest
+    outputs:
+      test_outputs: ${{ steps.get-ecr-name.outputs.ecr_name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set variable to pass to Workflow 2
+        id: set-variable
+        run: |
+          echo "VARIABLE_TO_SEND=VARIABLE_VALUE_SENT_FROM_WF1" >> $GITHUB_ENV
+
+      - name: Trigger Workflow 2
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: test_workflow_disp_2.yml
+          inputs: |
+            { "message": "${{ env.VARIABLE_TO_SEND }}", "runId": "${{ github.run_id }}" }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
