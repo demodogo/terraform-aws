@@ -1,13 +1,13 @@
 name: "Terraform EC2 Setup (with required resources) & Deployment"
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - test-no-vars
 
 jobs:
   setup-iam-ec2:
     runs-on: ubuntu-latest
-    outputs:
-      iam_instance_profile: ${{ steps.get-instance-profile.outputs.iam_instance_profile }}
 
     steps:
       - name: Checkout code
@@ -45,18 +45,10 @@ jobs:
           -target=module.iam.aws_iam_role_policy.ec2_cloudwatch_policy \
           -target=module.iam.aws_iam_instance_profile.ec2_cloudwatch_profile
 
-      - name: Get IAM Instance Profile
-        id: get-instance-profile
-        run: |
-          IAM_INSTANCE_PROFILE=$(terraform -chdir=terraform output -raw iam_instance_profile)
-          echo "iam_instance_profile=$IAM_INSTANCE_PROFILE" >> $GITHUB_OUTPUT
-
   setup-vpc:
     needs:
       - setup-iam-ec2
     runs-on: ubuntu-latest
-    outputs:
-      vpc_id: ${{ steps.get-vpc-id.outputs.vpc_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -85,20 +77,10 @@ jobs:
         id: terraform-apply-vpc
         run: terraform -chdir=terraform apply -auto-approve -target=module.vpc
 
-      - name: Get VPC ID
-        id: get-vpc-id
-        run: |
-          VPC_ID=$(terraform -chdir=terraform output -raw vpc_id)
-          echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
-
   setup-vpc-resources:
     needs:
         - setup-vpc
     runs-on: ubuntu-latest
-    outputs:
-      public_subnet_id: ${{ steps.get-subnet-id.outputs.public_subnet_id }}
-    env:
-        vpc_id: ${{ needs.setup-vpc.outputs.vpc_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -121,27 +103,16 @@ jobs:
 
       - name: Terraform Plan (VPC Resources)
         id: terraform-plan-vpc-resources
-        run: terraform -chdir=terraform plan -var "vpc_id=${{ env.vpc_id }}" -target=module.subnet -target=module.route_table -target=module.igw
+        run: terraform -chdir=terraform plan -target=module.subnet -target=module.route_table -target=module.igw
 
       - name: Terraform Apply (VPC Resources)
         id: terraform-apply-vpc-resources
         run: terraform -chdir=terraform apply -auto-approve -var "vpc_id=${{ env.vpc_id }}" -target=module.subnet -target=module.route_table -target=module.igw
 
-      - name: Get Subnet ID
-        id: get-subnet-id
-        run: |
-          PUBLIC_SUBNET_ID=$(terraform -chdir=terraform output -raw public_subnet_id)
-          echo "public_subnet_id=$PUBLIC_SUBNET_ID" >> $GITHUB_OUTPUT
-
   setup-security-group:
     needs:
       - setup-vpc-resources
     runs-on: ubuntu-latest
-    outputs:
-      security_group_id: ${{ steps.get-sg-id.outputs.security_group_id }}
-    env:
-      vpc_id: ${{ needs.setup-vpc.outputs.vpc_id }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -164,26 +135,16 @@ jobs:
 
       - name: Terraform Plan (Security Groups)
         id: terraform-plan-sg
-        run: terraform -chdir=terraform plan -var "vpc_id=${{ env.vpc_id }}" -target=module.sg
+        run: terraform -chdir=terraform plan -target=module.sg
 
       - name: Terraform Apply (Security Groups)
         id: terraform-apply-sg
-        run: terraform -chdir=terraform apply -auto-approve -var "vpc_id=${{ env.vpc_id }}" -target=module.sg
-
-      - name: Get Security Group ID
-        id: get-sg-id
-        run: |
-          SECURITY_GROUP_ID=$(terraform -chdir=terraform output -raw security_group_id)
-          echo "security_group_id=$SECURITY_GROUP_ID" >> $GITHUB_OUTPUT
+        run: terraform -chdir=terraform apply -auto-approve -target=module.sg
 
   setup-and-deploy-ec2:
     runs-on: ubuntu-latest
     needs:
       - setup-security-group
-    env:
-      security_group_id: ${{ needs.setup-security-group.outputs.security_group_id }}
-      public_subnet_id: ${{ needs.setup-vpc-resources.outputs.public_subnet_id }}
-      iam_instance_profile: ${{ needs.setup-iam-ec2.outputs.iam_instance_profile }}
     outputs:
       security_group_id: ${{ needs.setup-security-group.outputs.security_group_id }}
       instance_id: ${{ steps.get-instance-id.outputs.instance_id }}
@@ -228,9 +189,6 @@ jobs:
         run: |
           terraform -chdir=terraform plan \
           -target=module.ec2 \
-          -var "security_group_id=${{ env.security_group_id }}" \
-          -var "public_subnet_id=${{ env.public_subnet_id }}" \
-          -var "iam_instance_profile=${{ env.iam_instance_profile }}" \
           -var "key_name=${{ env.KEY_NAME }}"
 
       - name: Terraform Apply (EC2)
@@ -238,22 +196,19 @@ jobs:
         run: |
           terraform -chdir=terraform apply -auto-approve \
           -target=module.ec2 \
-          -var "security_group_id=${{ env.security_group_id }}" \
-          -var "public_subnet_id=${{ env.public_subnet_id }}" \
-          -var "iam_instance_profile=${{ env.iam_instance_profile }}" \
           -var "key_name=${{ env.KEY_NAME }}"
 
       - name: Get EC2 Public IP
         id: get-public-ip
         run: |
           INSTANCE_PUBLIC_IP=$(terraform -chdir=terraform output -raw instance_public_ip)
-          echo "instance_public_ip=$INSTANCE_PUBLIC_IP" >> $GITHUB_OUTPUT
+          echo "instance_public_ip=$INSTANCE_PUBLIC_IP" >> $GITHUB_ENV
 
       - name: Get EC2 Instance ID
         id: get-instance-id
         run: |
           INSTANCE_ID=$(terraform -chdir=terraform output -raw instance_id)
-          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_ENV
 
       - name: Get Runner IP Address
         id: runner_ip
@@ -269,7 +224,7 @@ jobs:
 
       - name: Esperar a que la instancia EC2 esté disponible
         run: |
-          aws ec2 wait instance-status-ok --instance-ids ${{ steps.get-instance-id.outputs.instance_id }}
+          aws ec2 wait instance-status-ok --instance-ids ${{ env.instance_id }}
           echo "La instancia EC2 está lista."
 
       - name: Instalar rsync
@@ -286,11 +241,11 @@ jobs:
             --exclude 'terraform' \
             --exclude 'ddg-dl-temp' \
             --exclude 'ddg-dl-temp.pub' \
-            -e "ssh -i ddg-dl-temp -o StrictHostKeyChecking=no" ./ ec2-user@${{ steps.get-public-ip.outputs.instance_public_ip }}:/home/ec2-user/app/
+            -e "ssh -i ddg-dl-temp -o StrictHostKeyChecking=no" ./ ec2-user@${{env.instance_public_ip }}:/home/ec2-user/app/
 
       - name: Desplegar aplicación en EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ddg-dl-temp ec2-user@${{ steps.get-public-ip.outputs.instance_public_ip }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ddg-dl-temp ec2-user@${{ env.instance_public_ip }} << 'EOF'
             sudo yum update -y
             sudo yum install -y nodejs
             sudo npm install -g pm2
@@ -304,7 +259,7 @@ jobs:
 
       - name: Verificar que la API está activa
         run: |
-          curl -I http://${{ steps.get-public-ip.outputs.instance_public_ip }}:3000/api
+          curl -I http://${{ env.instance_public_ip }}:3000/api
 
       - name: Eliminar claves SSH temporales
         run: |
@@ -313,8 +268,6 @@ jobs:
   create-cloudwatch-alarms:
     needs: setup-and-deploy-ec2
     runs-on: ubuntu-latest
-    env:
-      instance_id: ${{ needs.setup-and-deploy-ec2.outputs.instance_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -339,7 +292,6 @@ jobs:
         id: terraform-plan-alarms
         run: |
           terraform -chdir=terraform plan \
-          -var "instance_id=${{ env.instance_id }}" \
           -target=module.sns.aws_sns_topic.alarm_notifications \
           -target=module.sns.aws_sns_topic_subscription.email_subscription \
           -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage \

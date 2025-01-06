@@ -26,14 +26,14 @@ module "vpc" {
 
 module "sg" {
   source = "./modules/sg"
-  vpc_id = var.vpc_id != "" ? var.vpc_id : module.vpc.vpc_id
+  vpc_id = module.vpc.vpc_id
   name   = var.security_group_name
   my_ip  = var.my_ip
 }
 
 module "subnet" {
   source                    = "./modules/subnet"
-  vpc_id                    = var.vpc_id != "" ? var.vpc_id : module.vpc.vpc_id
+  vpc_id                    = module.vpc.vpc_id
   public_subnet_cidr_block  = var.public_subnet_cidr_block
   private_subnet_cidr_block = var.private_subnet_cidr_block
   public_subnet_name        = var.public_subnet_name
@@ -42,13 +42,13 @@ module "subnet" {
 
 module "igw" {
   source = "./modules/igw"
-  vpc_id = var.vpc_id != "" ? var.vpc_id : module.vpc.vpc_id
+  vpc_id = module.vpc.vpc_id
   name   = var.gateway_name
 }
 
 module "route_table" {
   source              = "./modules/route_table"
-  vpc_id              = var.vpc_id != "" ? var.vpc_id : module.vpc.vpc_id
+  vpc_id              = module.vpc.vpc_id
   internet_gateway_id = module.igw.internet_gateway_id
   public_subnet_id    = module.subnet.public_subnet_id
   name                = var.public_route_table_name
@@ -78,10 +78,10 @@ module "lambda" {
 module "ec2" {
   source            = "./modules/ec2"
   ami_id            = var.ami_id
-  iam_instance_profile = var.iam_instance_profile != "" ? var.iam_instance_profile : module.iam.instance_profile_name
+  iam_instance_profile = module.iam.instance_profile_name
   instance_type     = "t2.micro"
-  subnet_id         = var.public_subnet_id != "" ? var.public_subnet_id : module.subnet.public_subnet_id
-  security_group_id = var.security_group_id != "" ? var.security_group_id : module.sg.security_group_id
+  subnet_id         = module.subnet.public_subnet_id
+  security_group_id = module.sg.security_group_id
   name              = var.ec2_name
   key_name          = var.key_name
 
@@ -91,7 +91,7 @@ module "ec2" {
 
 module "cloudwatch" {
   source = "./modules/cloudwatch"
-  instance_id = var.instance_id != "" ? var.instance_id : module.ec2.instance_id
+  instance_id = module.ec2.instance_id
   sns_topic_arn = module.sns.sns_topic_arn
 }
 

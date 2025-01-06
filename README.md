@@ -56,12 +56,10 @@
 
 ````
   cd terraform
-
 ````
 Dentro de la carpeta, debes crear tus *claves SSH*
 ````
 ssh-keygen -t rsa -b 4096 -f test_key
-
 ````
 Asegúrate de usar exactamente el mismo nombre para la llave (*test_key*). Luego, en el archivo *terraform/main.tf* **descomenta** el último recurso *aws_key_pair*:
  ```terraform

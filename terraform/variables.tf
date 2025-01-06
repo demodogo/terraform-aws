@@ -5,22 +5,9 @@ variable "aws_region" {
 }
 
 // EC2
-variable "iam_instance_profile" {
-  description = "IAM instance profile"
-  type        = string
-  default = "ec2-cloudwatch-logs-profile"
-  nullable = true
-}
-
 variable "ec2_name" {
   description = "EC2 instance name"
   type        = string
-}
-
-variable "instance_id" {
-  description = "ID de la instancia EC2"
-  type        = string
-  default = ""
 }
 
 // Redes
@@ -46,22 +33,10 @@ variable "vpc_name" {
   default     = "tf-vpc"
 }
 
-variable "vpc_id" {
-  description = "ID de la VPC"
-  type        = string
-  default = ""
-}
-
 variable "public_subnet_name" {
   description = "Nombre de la subnet pública"
   type        = string
   default     = "tf-public-subnet"
-}
-
-variable "public_subnet_id" {
-  description = "ID de la subnet pública"
-  type        = string
-  default = ""
 }
 
 variable "private_subnet_name" {
