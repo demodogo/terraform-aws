@@ -1,0 +1,154 @@
+name: Terraform Lambda and resources setup
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-iam-lambda:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+          terraform_wrapper: true
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Plan (IAM Roles)
+        id: terraform-plan-iam-lambda
+        run: |
+          terraform -chdir=terraform plan \
+          -target=module.iam.aws_iam_role.lambda_execution_role \
+          -target=module.iam.aws_iam_policy.lambda_execution_policy \
+          -target=module.iam.aws_iam_role_policy_attachment.attach_lambda_execution_policy \
+          -target=module.iam.aws_iam_role.sqs_execution_role \
+          -target=module.iam.aws_iam_policy.sqs_execution_policy \
+          -target=module.iam.aws_iam_role_policy_attachment.attach_sqs_execution_policy \          
+
+      - name: Terraform Apply (IAM Roles)
+        id: terraform-apply-iam-lambda
+        run: |
+          terraform -chdir=terraform apply -auto-approve \
+          -target=module.iam.aws_iam_role.lambda_execution_role \
+          -target=module.iam.aws_iam_policy.lambda_execution_policy \
+          -target=module.iam.aws_iam_role_policy_attachment.attach_lambda_execution_policy \
+          -target=module.iam.aws_iam_role.sqs_execution_role \
+          -target=module.iam.aws_iam_policy.sqs_execution_policy \
+          -target=module.iam.aws_iam_role_policy_attachment.attach_sqs_execution_policy \
+  setup-sqs:
+    runs-on: ubuntu-latest
+    needs: setup-iam-lambda
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+          terraform_wrapper: true
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Plan (SQS)
+        id: terraform-plan-sqs
+        run: |
+          terraform -chdir=terraform plan \
+          -target=module.sqs
+
+      - name: Terraform Apply (SQS)
+        id: terraform-apply-sqs
+        run: |
+          terraform -chdir=terraform apply -auto-approve \
+          -target=module.sqs
+
+  setup-sns:
+    runs-on: ubuntu-latest
+    needs: setup-sqs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+          terraform_wrapper: true
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Plan (SNS)
+        id: terraform-plan-sns
+        run: |
+          terraform -chdir=terraform plan \
+          -target=module.sns.aws_sns_topic.lambda_topic \
+          -target=module.sns.aws_sns_topic_subscription.email_subscription_lambda
+
+      - name: Terraform Apply (SNS)
+        id: terraform-apply-sns
+        run: |
+          terraform -chdir=terraform apply -auto-approve \
+          -target=module.sns.aws_sns_topic.lambda_topic \
+          -target=module.sns.aws_sns_topic_subscription.email_subscription_lambda
+
+  setup_lambda:
+    runs-on: ubuntu-latest
+    needs: setup-sns
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+          terraform_wrapper: true
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Plan (Lambda)
+        id: terraform-plan-lambda
+        run: |
+          terraform -chdir=terraform plan \
+          -target=module.lambda
+
+      - name: Terraform Apply (lambda)
+        id: terraform-apply-lambda
+        run: |
+          terraform -chdir=terraform apply -auto-approve \
+          -target=module.lambda

@@ -6,6 +6,9 @@ jobs:
   setup-and-deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -71,3 +74,13 @@ jobs:
           args: --file=Dockerfile --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+  dispatch-lambda-workflow:
+    needs:
+      - setup-and-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Lambda Workflow
+        uses: pauldraper/workflow-dispatch@v1.6
+        with:
+          workflow: terraform_lambda.yml
