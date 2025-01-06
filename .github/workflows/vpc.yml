@@ -57,7 +57,7 @@ jobs:
           workflow: security_group.yml
           inputs: |
             {
-              "vpc_id": ${{ steps.get-vpc-id.outputs.vpc_id }},
-              "public_subnet_id": ${{ steps.get-subnet-id.outputs.public_subnet_id }},
-              "iam_instance_profile": ${{ github.event.inputs.iam_instance_profile }}"
+              "vpc_id": "${{ steps.get-vpc-id.outputs.vpc_id }}",
+              "public_subnet_id": "${{ steps.get-subnet-id.outputs.public_subnet_id }}"
+              "iam_instance_profile": "${{ github.event.inputs.iam_instance_profile }}"
             }
