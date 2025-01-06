@@ -22,7 +22,7 @@ jobs:
       - name: Trigger Workflow 2
         uses: benc-uk/workflow-dispatch@v1
         with:
-          workflow: test_workflow_disp_2.yml
+          workflow: Workflow 2 Receive Variables
           inputs: |
             { "message": "${{ env.VARIABLE_TO_SEND }}", "runId": "${{ github.run_id }}" }
         env:
