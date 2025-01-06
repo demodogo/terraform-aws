@@ -153,6 +153,10 @@ jobs:
       instance_id: ${{ steps.get-instance-id.outputs.instance_id }}
       instance_public_ip: ${{ steps.get-public-ip.outputs.instance_public_ip }}
     steps:
+      - name: Debug Security Group ID
+        run: | 
+          echo "Security Group ID: ${{ env.security_group_id }}"
+
       - name: Checkout code
         uses: actions/checkout@v3
 
