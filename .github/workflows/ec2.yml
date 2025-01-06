@@ -82,7 +82,6 @@ jobs:
         id: get-security-group-id
         run: |
           echo "security_group_id=${{ inputs.sg_id }}" >> $GITHUB_OUTPUT
-
   deploy:
     runs-on: ubuntu-latest
     needs: ec2-infra
