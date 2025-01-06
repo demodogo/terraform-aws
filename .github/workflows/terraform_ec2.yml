@@ -124,6 +124,9 @@ jobs:
           terraform_version: 1.5.0
           terraform_wrapper: true
 
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
       - name: Terraform Plan (Security Groups)
         id: terraform-plan-sg
         run: terraform -chdir=terraform plan -var "vpc_id=${{ env.vpc_id }}" -target=module.sg
@@ -180,6 +183,9 @@ jobs:
         with:
           terraform_version: 1.5.0
           terraform_wrapper: true
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
 
       - name: Terraform Plan (EC2)
         id: terraform-plan-ec2
