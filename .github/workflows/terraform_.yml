@@ -1,4 +1,4 @@
-name: Terraform Infra (AWS Resources)
+name: Terraform Setup 1
 
 on:
   push:

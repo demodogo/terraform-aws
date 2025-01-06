@@ -1,0 +1,43 @@
+name: Configurar Alarmas de CloudWatch para EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      instance_id:
+        description: "ID de la instancia EC2"
+        required: true
+        type: string
+
+jobs:
+  cloudwatch-alarms:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+          terraform_wrapper: true
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Apply (CloudWatch Alarms for EC2 including SNS Topic)
+        id: terraform-apply
+        run: |
+          terraform -chdir=terraform apply -auto-approve 
+          -var "instance_id=${{ github.event.inputs.instance_id }}"
+          -target=module.sns.aws_sns_topic.alarm_notifications
+          -target=module.sns.aws_sns_topic_subscription.email_subscription
+          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage
+          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_network_in
+          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.status_check_failed

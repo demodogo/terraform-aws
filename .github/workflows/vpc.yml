@@ -1,0 +1,63 @@
+name: Terraform VPC & Networking Setup
+
+on:
+  workflow_dispatch:
+    inputs:
+      iam_instance_profile:
+        description: "IAM EC2 Instance Profile"
+        required: true
+        type: string
+
+jobs:
+  setup-vpc:
+    runs-on: ubuntu-latest
+    outputs:
+      vpc_id: ${{ steps.get-vpc-id.outputs.vpc_id }}
+      public_subnet_id: ${{ steps.get-subnet-id.outputs.subnet_id }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+          terraform_wrapper: true
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Apply (VPC & Networking)
+        id: terraform-apply
+        run: terraform -chdir=terraform apply -auto-approve -target=module.vpc -target=module.subnet -target=module.route_table -target=module.igw
+
+      - name: Get VPC ID
+        id: get-vpc-id
+        run: |
+          VPC_ID=$(terraform -chdir=terraform output -raw vpc_id)
+          echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
+
+      - name: Get Subnet ID
+        id: get-subnet-id
+        run: |
+          PUBLIC_SUBNET_ID=$(terraform -chdir=terraform output -raw public_subnet_id)
+          echo "public_subnet_id=$SUBNET_ID" >> $GITHUB_OUTPUT
+
+      - name: Trigger Security Group Workflow
+        uses: pauldraper/workflow-dispatch@v1.6
+        with:
+          workflow: security_group.yml
+          inputs: |
+            {
+              "vpc_id": "${{ steps.get-vpc-id.outputs.vpc_id }}",
+              "public_subnet_id": "${{ steps.get-subnet-id.outputs.subnet_id }}"
+              "iam_instance_profile": "${{ github.event.inputs.iam_instance_profile }}"
+            }

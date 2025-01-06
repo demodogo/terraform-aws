@@ -1,7 +1,16 @@
+// Región AWS
 variable "aws_region" {
   description = "Región de AWS"
   type        = string
 }
+
+// IAM
+variable "iam_instance_profile" {
+  description = "IAM instance profile"
+  type        = string
+}
+
+// Redes
 variable "vpc_cidr_block" {
   description = "Rango CIDR para la VPC"
   type        = string
@@ -23,8 +32,19 @@ variable "vpc_name" {
   default     = "tf-vpc"
 }
 
+variable "vpc_id" {
+  description = "ID de la VPC"
+  type        = string
+}
+
 variable "public_subnet_name" {
   description = "Nombre de la subnet pública"
+  type        = string
+  default     = "tf-public-subnet"
+}
+
+variable "public_subnet_id" {
+  description = "ID de la subnet pública"
   type        = string
   default     = "tf-public-subnet"
 }
@@ -35,18 +55,28 @@ variable "private_subnet_name" {
   default     = "tf-private-subnet"
 }
 
+variable "private_subnet_id" {
+  description = "ID de la subnet privada"
+  type        = string
+  default     = "tf-public-subnet"
+}
+
 variable "gateway_name" {
   description = "Nombre del Internet Gateway"
   type        = string
   default     = "tf-internet-gateway"
 }
 
-variable "sg_name" {
+variable "security_group_name" {
   description = "Nombre del Security Group"
   type        = string
   default     = "tf-main-sg"
 }
 
+variable "security_group_id" {
+    description = "ID del Security Group"
+    type        = string
+}
 variable "sns_topic_name" {
     description = "Nombre del topic SNS"
     type        = string

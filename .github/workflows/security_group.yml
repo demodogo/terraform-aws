@@ -1,0 +1,61 @@
+name: Terraform Security Group Setup
+
+on:
+  workflow_dispatch:
+    inputs:
+      vpc_id:
+        description: "VPC ID"
+        required: true
+        type: string
+      public_subnet_id:
+        description: "Subnet ID"
+        required: true
+        type: string
+      iam_instance_profile:
+        description: "IAM EC2 Instance Profile"
+        required: true
+        type: string
+
+jobs:
+  create-sg:
+    runs-on: ubuntu-latest
+    outputs:
+      sg_id: ${{ steps.get-sg-id.outputs.sg_id }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+          terraform_wrapper: true
+
+      - name: Terraform Apply (Security Groups)
+        id: terraform-apply
+        run: terraform -chdir=terraform apply -auto-approve -var "vpc_id=${{ github.event.inputs.vpc_id }}" -target=module.sg
+
+      - name: Get Security Group ID
+        id: get-sg-id
+        run: |
+          SG_ID=$(terraform -chdir=terraform output -raw security_group_id)
+          echo "sg_id=$SG_ID" >> $GITHUB_OUTPUT
+
+      - name: Trigger EC2 Workflow
+        uses: pauldraper/workflow-dispatch@v1.6
+        with:
+          workflow: ec2.yml
+          inputs: |
+            {
+              "sg_id": "${{ steps.get-sg-id.outputs.sg_id }}",
+              "public_subnet_id": "${{ github.event.inputs.public_subnet_id }}",
+              "iam_instance_profile": "${{ github.event.inputs.iam_instance_profile }}"
+            }

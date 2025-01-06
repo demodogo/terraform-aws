@@ -1,0 +1,28 @@
+on:
+  push:
+    branches:
+      - mejora-continua
+jobs:
+  run-snyk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.5.0
+      - name: Terraform Scan
+        uses: snyk/actions/iac@master
+        with:
+          file: terraform/
+          json: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  dispatch-iam-ec2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger EC2 IAM Role Workflow
+        uses: pauldraper/workflow-dispatch@v1.6
+        with:
+          workflow: iam_ec2.yml

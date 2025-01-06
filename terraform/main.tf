@@ -26,8 +26,8 @@ module "vpc" {
 
 module "sg" {
   source = "./modules/sg"
-  vpc_id = module.vpc.vpc_id
-  name   = var.sg_name
+  vpc_id = var.vpc_id
+  name   = var.security_group_name
   my_ip  = var.my_ip
 }
 
@@ -78,10 +78,10 @@ module "lambda" {
 module "ec2" {
   source            = "./modules/ec2"
   ami_id            = var.ami_id
-  iam_instance_profile = module.iam.instance_profile_name
+  iam_instance_profile = var.iam_instance_profile
   instance_type     = "t2.micro"
-  subnet_id         = module.subnet.public_subnet_id
-  security_group_id = module.sg.security_group_id
+  subnet_id         = var.public_subnet_id
+  security_group_id = var.security_group_id
   name              = var.ec2_name
   key_name          = var.key_name
 
