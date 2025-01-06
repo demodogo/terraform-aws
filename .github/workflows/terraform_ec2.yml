@@ -77,11 +77,11 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=terraform init
 
-      - name: Terraform Plan (VPC & Networking)
+      - name: Terraform Plan (VPC)
         id: terraform-plan-vpc
         run: terraform -chdir=terraform plan -target=module.vpc
 
-      - name: Terraform Apply (VPC & Networking)
+      - name: Terraform Apply (VPC)
         id: terraform-apply-vpc
         run: terraform -chdir=terraform apply -auto-approve -target=module.vpc
 
@@ -119,12 +119,12 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=terraform init
 
-      - name: Terraform Plan (VPC & Networking)
-        id: terraform-plan-vpc
+      - name: Terraform Plan (VPC Resources)
+        id: terraform-plan-vpc-resources
         run: terraform -chdir=terraform plan -var "vpc_id=${{ env.vpc_id }}" -target=module.subnet -target=module.route_table -target=module.igw
 
-      - name: Terraform Apply (VPC & Networking)
-        id: terraform-apply-vpc
+      - name: Terraform Apply (VPC Resources)
+        id: terraform-apply-vpc-resources
         run: terraform -chdir=terraform apply -auto-approve -var "vpc_id=${{ env.vpc_id }}" -target=module.subnet -target=module.route_table -target=module.igw
 
       - name: Get Subnet ID
@@ -188,10 +188,6 @@ jobs:
       instance_id: ${{ steps.get-instance-id.outputs.instance_id }}
       instance_public_ip: ${{ steps.get-public-ip.outputs.instance_public_ip }}
     steps:
-      - name: Debug Security Group ID
-        run: | 
-          echo "Security Group ID: ${{ env.security_group_id }}"
-
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -266,6 +262,10 @@ jobs:
       instance_public_ip: ${{ needs.setup-ec2-infra.outputs.instance_public_ip }}
       instance_id: ${{ needs.setup-ec2-infra.outputs.instance_id }}
     steps:
+      - name: Debug Security Group ID
+        run: |
+         echo "Security Group ID: ${{ env.security_group_id }}"
+
       - name: Checkout code
         uses: actions/checkout@v3
 

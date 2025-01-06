@@ -6,7 +6,7 @@ on:
     types: [completed]
 
 jobs:
-  setup:
+  destroy-resources:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,9 +24,6 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.0
-
-      - name: Sleep for 10 seconds
-        run: sleep 10
 
       - name: Terraform Init
         run: terraform -chdir=terraform init
