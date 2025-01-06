@@ -33,9 +33,9 @@ jobs:
         id: terraform-apply
         run: |
           terraform -chdir=terraform apply -auto-approve 
-          -target=module.iam.aws_iam_role.ec2_cloudwatch_role
-          -target=module.iam.aws_iam_role_policy.ec2_cloudwatch_policy
-          -target=module.iam.aws_iam_instance_profile.ec2_cloudwatch_profile
+          -target=aws_iam_role.ec2_cloudwatch_role \
+          -target=aws_iam_role_policy.ec2_cloudwatch_policy \
+          -target=aws_iam_instance_profile.ec2_cloudwatch_profile
 
       - name: Get IAM Instance Profile
         id: get-instance-profile

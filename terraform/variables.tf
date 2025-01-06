@@ -126,6 +126,7 @@ variable "ami_id" {
   type        = string
 }
 
+
 // LLave SSH
 variable "key_name" {
   description = "Key pair name"
