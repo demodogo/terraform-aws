@@ -34,10 +34,10 @@ jobs:
       - name: Terraform Apply (CloudWatch Alarms for EC2 including SNS Topic)
         id: terraform-apply
         run: |
-          terraform -chdir=terraform apply -auto-approve 
-          -var "instance_id=${{ github.event.inputs.instance_id }}"
-          -target=module.sns.aws_sns_topic.alarm_notifications
-          -target=module.sns.aws_sns_topic_subscription.email_subscription
-          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage
-          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_network_in
-          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.status_check_failed
+          terraform -chdir=terraform apply -auto-approve \
+          -var "instance_id=${{ github.event.inputs.instance_id }}" \
+          -target=module.sns.aws_sns_topic.alarm_notifications \
+          -target=module.sns.aws_sns_topic_subscription.email_subscription \
+          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage \
+          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_network_in \
+          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.status_check_failed \

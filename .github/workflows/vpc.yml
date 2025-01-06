@@ -58,6 +58,6 @@ jobs:
           inputs: |
             {
               "vpc_id": "${{ steps.get-vpc-id.outputs.vpc_id }}",
-              "public_subnet_id": "${{ steps.get-subnet-id.outputs.subnet_id }}"
+              "public_subnet_id": "${{ steps.get-subnet-id.outputs.subnet_id }}",
               "iam_instance_profile": "${{ github.event.inputs.iam_instance_profile }}"
             }
