@@ -15,7 +15,7 @@ if (existsSync(publicPath)) {
     console.log('No se encontró la carpeta "public". ¡Estás en la API!.');
 
     server.get('/api', (req, res) => {
-        res.send('¡API corriendo en EC2!');
+        res.send('API corriendo en EC2!');
     });
 
     server.get('/api/users', async (req, res) => {
