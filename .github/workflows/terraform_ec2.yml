@@ -172,7 +172,7 @@ jobs:
           ssh-keygen -t rsa -b 2048 -f ddg-dl-temp -N "" -q
           echo "Claves generadas"
 
-      - name: Set key name in output
+      - name: Set key name
         id: get-key-name
         run: |
           KEY_NAME=temp-key-${{ github.run_id }}
@@ -181,7 +181,7 @@ jobs:
       - name: Import Public Key to AWS
         run: |
           aws ec2 import-key-pair \
-            --key-name ${{ env.KEY_NAME }} \
+            --key-name ${{ steps.get-key-name.outputs.key_name }} \
             --public-key-material "$(base64 -w 0 ddg-dl-temp.pub)"
 
       - name: Setup Terraform
