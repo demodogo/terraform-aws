@@ -107,7 +107,7 @@ jobs:
 
       - name: Terraform Apply (VPC Resources)
         id: terraform-apply-vpc-resources
-        run: terraform -chdir=terraform apply -auto-approve -var "vpc_id=${{ env.vpc_id }}" -target=module.subnet -target=module.route_table -target=module.igw
+        run: terraform -chdir=terraform apply -auto-approve -target=module.subnet -target=module.route_table -target=module.igw
 
   setup-security-group:
     needs:
@@ -145,10 +145,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - setup-security-group
-    outputs:
-      security_group_id: ${{ needs.setup-security-group.outputs.security_group_id }}
-      instance_id: ${{ steps.get-instance-id.outputs.instance_id }}
-      instance_public_ip: ${{ steps.get-public-ip.outputs.instance_public_ip }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -303,7 +299,6 @@ jobs:
         id: terraform-apply-alarms
         run: |
           terraform -chdir=terraform apply -auto-approve \
-          -var "instance_id=${{ env.instance_id }}" \
           -target=module.sns.aws_sns_topic.alarm_notifications \
           -target=module.sns.aws_sns_topic_subscription.email_subscription \
           -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage \
