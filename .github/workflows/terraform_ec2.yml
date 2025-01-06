@@ -57,7 +57,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       vpc_id: ${{ steps.get-vpc-id.outputs.vpc_id }}
-      public_subnet_id: ${{ steps.get-subnet-id.outputs.subnet_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -80,17 +79,53 @@ jobs:
 
       - name: Terraform Plan (VPC & Networking)
         id: terraform-plan-vpc
-        run: terraform -chdir=terraform plan -target=module.vpc -target=module.subnet -target=module.route_table -target=module.igw
+        run: terraform -chdir=terraform plan -target=module.vpc
 
       - name: Terraform Apply (VPC & Networking)
         id: terraform-apply-vpc
-        run: terraform -chdir=terraform apply -auto-approve -target=module.vpc -target=module.subnet -target=module.route_table -target=module.igw
+        run: terraform -chdir=terraform apply -auto-approve -target=module.vpc
 
       - name: Get VPC ID
         id: get-vpc-id
         run: |
           VPC_ID=$(terraform -chdir=terraform output -raw vpc_id)
           echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
+
+  setup-vpc-resources:
+    needs:
+        - setup-vpc
+    runs-on: ubuntu-latest
+    outputs:
+      public_subnet_id: ${{ steps.get-subnet-id.outputs.public_subnet_id }}
+    env:
+        vpc_id: ${{ needs.setup-vpc.outputs.vpc_id }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+          terraform_wrapper: true
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Plan (VPC & Networking)
+        id: terraform-plan-vpc
+        run: terraform -chdir=terraform plan -var "vpc_id=${{ env.vpc_id }}" -target=module.subnet -target=module.route_table -target=module.igw
+
+      - name: Terraform Apply (VPC & Networking)
+        id: terraform-apply-vpc
+        run: terraform -chdir=terraform apply -auto-approve -var "vpc_id=${{ env.vpc_id }}" -target=module.subnet -target=module.route_table -target=module.igw
 
       - name: Get Subnet ID
         id: get-subnet-id
@@ -147,7 +182,7 @@ jobs:
       - setup-security-group
     env:
       security_group_id: ${{ needs.setup-security-group.outputs.security_group_id }}
-      public_subnet_id: ${{ needs.setup-vpc.outputs.public_subnet_id }}
+      public_subnet_id: ${{ needs.setup-vpc-resources.outputs.public_subnet_id }}
       iam_instance_profile: ${{ needs.setup-iam-ec2.outputs.iam_instance_profile }}
     outputs:
       instance_id: ${{ steps.get-instance-id.outputs.instance_id }}
