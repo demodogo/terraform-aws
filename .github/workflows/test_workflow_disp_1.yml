@@ -22,7 +22,11 @@ jobs:
       - name: Trigger Workflow 2
         uses: pauldraper/workflow-dispatch@v1.6
         with:
-          inputs: '{"color": "blue"}'
+          inputs: |
+            {
+              "message": "Hello from Workflow 1",
+              "runId": "${{ github.run_id }}"
+            }
           workflow: test_workflow_disp_2.yml
 
 
