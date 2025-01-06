@@ -165,7 +165,7 @@ jobs:
 
       - name: Scan ECR Image
         continue-on-error: true
-        uses: snyk/actions/ecr@master
+        uses: snyk/actions/docker@master
         with:
           image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ECR_NAME }}:latest
           args: --file=Dockerfile --severity-threshold=high
