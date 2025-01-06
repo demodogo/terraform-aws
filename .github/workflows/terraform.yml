@@ -3,7 +3,7 @@ name: Terraform Infra (AWS Resources)
 on:
   push:
     branches:
-      - test
+      - main
 
 jobs:
   setup-and-deploy:
