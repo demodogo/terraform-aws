@@ -1,9 +1,8 @@
 name: "Terraform EC2 Setup (with required resources) & Deployment"
 
 on:
-  push:
-    branches:
-      - test-no-vars
+  workflow_dispatch:
+
 
 jobs:
   setup-iam-ec2:

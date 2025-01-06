@@ -1,8 +1,7 @@
 name: Terraform ECR Deployment
 on:
-  push:
-    branches:
-      - mejora-continua
+  workflow_dispatch:
+
 jobs:
   setup-and-deploy:
     runs-on: ubuntu-latest
