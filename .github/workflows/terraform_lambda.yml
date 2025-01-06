@@ -27,25 +27,25 @@ jobs:
 
       - name: Terraform Plan (IAM Roles)
         id: terraform-plan-iam-lambda
-        run: |
-          terraform -chdir=terraform plan \
-          -target=module.iam.aws_iam_role.lambda_execution_role \
-          -target=module.iam.aws_iam_policy.lambda_execution_policy \
-          -target=module.iam.aws_iam_role_policy_attachment.attach_lambda_execution_policy \
-          -target=module.iam.aws_iam_role.sqs_execution_role \
-          -target=module.iam.aws_iam_policy.sqs_execution_policy \
-          -target=module.iam.aws_iam_role_policy_attachment.attach_sqs_execution_policy \          
+        run: >
+          terraform -chdir=terraform plan
+          -target=module.iam.aws_iam_role.lambda_execution_role
+          -target=module.iam.aws_iam_policy.lambda_execution_policy
+          -target=module.iam.aws_iam_role_policy_attachment.attach_lambda_execution_policy
+          -target=module.iam.aws_iam_role.sqs_execution_role
+          -target=module.iam.aws_iam_policy.sqs_execution_policy
+          -target=module.iam.aws_iam_role_policy_attachment.attach_sqs_execution_policy      
 
       - name: Terraform Apply (IAM Roles)
         id: terraform-apply-iam-lambda
-        run: |
-          terraform -chdir=terraform apply -auto-approve \
-          -target=module.iam.aws_iam_role.lambda_execution_role \
-          -target=module.iam.aws_iam_policy.lambda_execution_policy \
-          -target=module.iam.aws_iam_role_policy_attachment.attach_lambda_execution_policy \
-          -target=module.iam.aws_iam_role.sqs_execution_role \
-          -target=module.iam.aws_iam_policy.sqs_execution_policy \
-          -target=module.iam.aws_iam_role_policy_attachment.attach_sqs_execution_policy \
+        run: >
+          terraform -chdir=terraform apply -auto-approve
+          -target=module.iam.aws_iam_role.lambda_execution_role
+          -target=module.iam.aws_iam_policy.lambda_execution_policy
+          -target=module.iam.aws_iam_role_policy_attachment.attach_lambda_execution_policy
+          -target=module.iam.aws_iam_role.sqs_execution_role
+          -target=module.iam.aws_iam_policy.sqs_execution_policy
+          -target=module.iam.aws_iam_role_policy_attachment.attach_sqs_execution_policy
   setup-sqs:
     runs-on: ubuntu-latest
     needs: setup-iam-lambda
