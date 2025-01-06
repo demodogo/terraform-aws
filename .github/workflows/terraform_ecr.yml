@@ -21,20 +21,6 @@ jobs:
         with:
           registry: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
 
-      - name: Build/Tag Docker Image
-        run: |
-          docker build -t dl-web-app:latest .
-          docker tag dl-web-app:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ECR_NAME }}:latest
-
-      - name: Run Snyk Docker Scan
-        continue-on-error: true
-        uses: snyk/actions/docker@master
-        with:
-          image: dl-web-app
-          args: --file=Dockerfile --severity-threshold=high
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -60,7 +46,21 @@ jobs:
         run: |
           cd terraform
           ECR_NAME=$(terraform output -raw repository_name)
-          echo "ecr_name=$ECR_NAME" >> $GITHUB_ENV 
+          echo "ecr_name=$ECR_NAME" >> $GITHUB_ENV
+
+      - name: Build/Tag Docker Image
+        run: |
+          docker build -t dl-web-app:latest .
+          docker tag dl-web-app:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ecr_name }}:latest
+
+      - name: Run Snyk Docker Scan (Local image)
+        continue-on-error: true
+        uses: snyk/actions/docker@master
+        with:
+          image: dl-web-app
+          args: --file=Dockerfile --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Push Docker Image to ECR
         run: |
