@@ -48,21 +48,27 @@ jobs:
           terraform -chdir=terraform plan \
           -target=module.ecr
 
-      - name: Terraform Apply (IAM Roles)
-        id: terraform-apply-iam
+      - name: Terraform Apply (ECR)
+        id: terraform-apply-ecr
         run: |
           terraform -chdir=terraform apply -auto-approve \
           -target=module.ecr
 
+      - name: Get ECR Name
+        run: |
+          cd terraform
+          ECR_NAME=$(terraform output -raw repository_name)
+          echo "ecr_name=$ECR_NAME" >> $GITHUB_ENV 
+
       - name: Push Docker Image to ECR
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ECR_NAME }}:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ecr_name }}:latest
 
       - name: Scan ECR Image
         continue-on-error: true
         uses: snyk/actions/docker@master
         with:
-          image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ECR_NAME }}:latest
+          image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ecr_name }}:latest
           args: --file=Dockerfile --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}

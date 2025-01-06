@@ -8,7 +8,6 @@ on:
 jobs:
   setup-iam-ec2:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -176,7 +175,8 @@ jobs:
       - name: Set key name in output
         id: get-key-name
         run: |
-          echo "key_name=temp-key-${{ github.run_id }}" >> GITHUB_OUTPUT
+          KEY_NAME=temp-key-${{ github.run_id }}
+          echo "key_name=$KEY_NAME" >> $GITHUB_OUTPUT
 
       - name: Import Public Key to AWS
         run: |
@@ -198,14 +198,14 @@ jobs:
         run: |
           terraform -chdir=terraform plan \
           -target=module.ec2 \
-          -var "key_name=${{ env.KEY_NAME }}"
+          -var "key_name=${{ steps.get-key-name.outputs.key_name }}"
 
       - name: Terraform Apply (EC2)
         id: terraform-apply-ec2
         run: |
           terraform -chdir=terraform apply -auto-approve \
           -target=module.ec2 \
-          -var "key_name=${{ env.KEY_NAME }}"
+          -var "key_name=${{ steps.get-key-name.outputs.key_name }}"
 
       - name: Get EC2 Public IP
         id: get-public-ip
