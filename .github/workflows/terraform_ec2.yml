@@ -314,7 +314,7 @@ jobs:
     needs: setup-and-deploy-ec2
     runs-on: ubuntu-latest
     env:
-      instance_id: ${{ needs.setup-ec2-infra.outputs.instance_id }}
+      instance_id: ${{ needs.setup-and-deploy-ec2.outputs.instance_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

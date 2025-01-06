@@ -91,7 +91,7 @@ module "ec2" {
 
 module "cloudwatch" {
   source = "./modules/cloudwatch"
-  instance_id = module.ec2.instance_id
+  instance_id = var.instance_id != "" ? var.instance_id : module.ec2.instance_id
   sns_topic_arn = module.sns.sns_topic_arn
 }
 

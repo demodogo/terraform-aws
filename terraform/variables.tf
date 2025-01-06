@@ -17,6 +17,12 @@ variable "ec2_name" {
   type        = string
 }
 
+variable "instance_id" {
+  description = "ID de la instancia EC2"
+  type        = string
+  default = ""
+}
+
 // Redes
 variable "vpc_cidr_block" {
   description = "Rango CIDR para la VPC"
