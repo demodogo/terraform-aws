@@ -9,6 +9,7 @@ variable "iam_instance_profile" {
   description = "IAM instance profile"
   type        = string
   default = "ec2-cloudwatch-logs-profile"
+  nullable = true
 }
 
 variable "ec2_name" {
@@ -41,6 +42,7 @@ variable "vpc_name" {
 variable "vpc_id" {
   description = "ID de la VPC"
   type        = string
+  nullable = true
 }
 
 variable "public_subnet_name" {
@@ -52,7 +54,7 @@ variable "public_subnet_name" {
 variable "public_subnet_id" {
   description = "ID de la subnet pública"
   type        = string
-  default     = "tf-public-subnet"
+  nullable = true
 }
 
 variable "private_subnet_name" {
@@ -64,7 +66,7 @@ variable "private_subnet_name" {
 variable "private_subnet_id" {
   description = "ID de la subnet privada"
   type        = string
-  default     = "tf-public-subnet"
+  nullable = true
 }
 
 variable "gateway_name" {

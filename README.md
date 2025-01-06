@@ -56,10 +56,12 @@
 
 ````
   cd terraform
+
 ````
 Dentro de la carpeta, debes crear tus *claves SSH*
 ````
 ssh-keygen -t rsa -b 4096 -f test_key
+
 ````
 Asegúrate de usar exactamente el mismo nombre para la llave (*test_key*). Luego, en el archivo *terraform/main.tf* **descomenta** el último recurso *aws_key_pair*:
  ```terraform
@@ -67,7 +69,13 @@ Asegúrate de usar exactamente el mismo nombre para la llave (*test_key*). Luego
     key_name   = "test_key"
     public_key = file("${path.root}/test_key.pub")
   }
+
 ````
+Configura el archivo *terraform/terraform.tfvars* y cambia el valor de la variable "my_ip" por tu IP
+````
+  my_ip = <TU_IP>
+```` 
+
 Inicializa *Terraform*:
 ````
   terraform init 
@@ -83,4 +91,4 @@ Aplica los cambios con *Terraform Apply*:
 
 #### Correr el proyecto con las automatizaciones de *Github Actions*
 
-* Luego de configurar el backend en *Terraform* (editar el archivo *terraform/main.tf* como se muestra en pasos anteriores), haz un push a la rama *main* de tu repositorio. Los *workflows* se ejecutarán automáticamente. En este caso los pasos para el run local no son necesarios.
+* Luego de configurar el backend en *Terraform* (editar el archivo *terraform/main.tf* como se muestra en pasos anteriores), haz un push a la rama *main* de tu repositorio. Los *workflows* se ejecutarán automáticamente.
