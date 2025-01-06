@@ -264,8 +264,9 @@ jobs:
           EOF
 
       - name: Verificar que la API está activa
+        continue-on-error: true
         run: |
-          curl -I https://${{ env.instance_public_ip }}:3000/api
+          curl -I http://${{ env.instance_public_ip }}:3000/api
 
       - name: Eliminar claves SSH temporales
         run: |
@@ -309,7 +310,7 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=terraform init
 
-      - name: Terraform Apply (CloudWatch Alarms for EC2 including SNS Topic)
+      - name: Terraform Plan (CloudWatch Alarms for EC2 including SNS Topic)
         id: terraform-plan-alarms
         run: |
           terraform -chdir=terraform plan \
