@@ -311,7 +311,7 @@ jobs:
           rm -f ddg-dl-temp ddg-dl-temp.pub
 
   create-cloudwatch-alarms:
-    needs: deploy-app
+    needs: setup-and-deploy-ec2
     runs-on: ubuntu-latest
     env:
       instance_id: ${{ needs.setup-ec2-infra.outputs.instance_id }}
