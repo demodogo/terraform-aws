@@ -98,3 +98,8 @@ module "cloudwatch" {
 module "sqs" {
   source = "./modules/sqs"
 }
+
+/*resource "aws_key_pair" "test_key" {
+  key_name   = "test_key"
+  public_key = file("${path.root}/test_key.pub")
+}*/
