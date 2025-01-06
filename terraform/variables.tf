@@ -63,12 +63,6 @@ variable "private_subnet_name" {
   nullable = true
 }
 
-variable "private_subnet_id" {
-  description = "ID de la subnet privada"
-  type        = string
-  nullable = true
-}
-
 variable "gateway_name" {
   description = "Nombre del Internet Gateway"
   type        = string
