@@ -56,10 +56,12 @@
 
 ````
   cd terraform
+
 ````
 Dentro de la carpeta, debes crear tus *claves SSH*
 ````
 ssh-keygen -t rsa -b 4096 -f test_key
+
 ````
 Asegúrate de usar exactamente el mismo nombre para la llave (*test_key*). Luego, en el archivo *terraform/main.tf* **descomenta** el último recurso *aws_key_pair*:
  ```terraform
@@ -69,9 +71,16 @@ Asegúrate de usar exactamente el mismo nombre para la llave (*test_key*). Luego
   }
 
 ````
-Configura el archivo *terraform/terraform.tfvars* y cambia el valor de la variable "my_ip" por tu IP
+Configura el archivo *terraform/terraform.tfvars*.
+
+ *a.* Cambia el valor de la variable "my_ip" por tu IP
 ````
   my_ip = <TU_IP>
+```` 
+ *b.* Cambia el valor de las variables "subscriber_email_lambda" y "subscriber_email" por tu dirección de correo electrónico
+````
+  subscriber_email = <TU CORREO ELECTRÓNICO>
+  subscriber_email_lambda = <TU CORREO ELECTRÓNICO>
 ```` 
 
 Inicializa *Terraform*:

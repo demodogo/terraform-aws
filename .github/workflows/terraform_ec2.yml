@@ -265,7 +265,7 @@ jobs:
 
       - name: Verificar que la API está activa
         run: |
-          curl -I http://${{ env.instance_public_ip }}:3000/api
+          curl -I https://${{ env.instance_public_ip }}:3000/api
 
       - name: Eliminar claves SSH temporales
         run: |
@@ -285,6 +285,21 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
+      - name: Generate SSH Key Pair
+        run: |
+          ssh-keygen -t rsa -b 2048 -f ddg-dl-temp -N "" -q
+          echo "Claves generadas"
+
+      - name: Set key name in environment
+        run: |
+          echo "KEY_NAME=temp-key-${{ github.run_id }}" >> $GITHUB_ENV
+
+      - name: Import Public Key to AWS
+        run: |
+          aws ec2 import-key-pair \
+            --key-name ${{ env.KEY_NAME }} \
+            --public-key-material "$(base64 -w 0 ddg-dl-temp.pub)"
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -298,6 +313,7 @@ jobs:
         id: terraform-plan-alarms
         run: |
           terraform -chdir=terraform plan \
+          -var "key_name=${{ env.KEY_NAME }}" \
           -target=module.sns.aws_sns_topic.alarm_notifications \
           -target=module.sns.aws_sns_topic_subscription.email_subscription \
           -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage \
@@ -309,6 +325,7 @@ jobs:
         id: terraform-apply-alarms
         run: |
           terraform -chdir=terraform apply -auto-approve \
+          -var "key_name=${{ env.KEY_NAME }}" \
           -target=module.sns.aws_sns_topic.alarm_notifications \
           -target=module.sns.aws_sns_topic_subscription.email_subscription \
           -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage \
