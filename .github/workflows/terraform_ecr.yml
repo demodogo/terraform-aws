@@ -1,0 +1,86 @@
+name: Terraform ECR Deployment
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          registry: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+          terraform_wrapper: true
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Plan (ECR)
+        id: terraform-plan-ecr
+        run: |
+          terraform -chdir=terraform plan \
+          -target=module.ecr
+
+      - name: Terraform Apply (ECR)
+        id: terraform-apply-ecr
+        run: |
+          terraform -chdir=terraform apply -auto-approve \
+          -target=module.ecr
+
+      - name: Get ECR Name
+        run: |
+          cd terraform
+          ECR_NAME=$(terraform output -raw repository_name)
+          echo "ecr_name=$ECR_NAME" >> $GITHUB_ENV
+
+      - name: Build/Tag Docker Image
+        run: |
+          docker build -t dl-web-app:latest .
+          docker tag dl-web-app:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ecr_name }}:latest
+
+      - name: Run Snyk Docker Scan (Local image)
+        continue-on-error: true
+        uses: snyk/actions/docker@master
+        with:
+          image: dl-web-app
+          args: --file=Dockerfile --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Push Docker Image to ECR
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ecr_name }}:latest
+
+      - name: Scan ECR Image
+        continue-on-error: true
+        uses: snyk/actions/docker@master
+        with:
+          image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ env.ecr_name }}:latest
+          args: --file=Dockerfile --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+  dispatch-lambda-workflow:
+    needs:
+      - setup-and-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Lambda Workflow
+        uses: pauldraper/workflow-dispatch@v1.6
+        with:
+          workflow: terraform_lambda.yml

@@ -1,7 +1,16 @@
+// Región AWS
 variable "aws_region" {
   description = "Región de AWS"
   type        = string
 }
+
+// EC2
+variable "ec2_name" {
+  description = "EC2 instance name"
+  type        = string
+}
+
+// Redes
 variable "vpc_cidr_block" {
   description = "Rango CIDR para la VPC"
   type        = string
@@ -11,6 +20,7 @@ variable "public_subnet_cidr_block" {
   description = "Rango CIDR para la subnet pública"
   type        = string
 }
+
 
 variable "private_subnet_cidr_block" {
   description = "Rango CIDR para la subnet privada"
@@ -32,7 +42,7 @@ variable "public_subnet_name" {
 variable "private_subnet_name" {
   description = "Nombre de la subnet privada"
   type        = string
-  default     = "tf-private-subnet"
+  default = "tf-private-subnet"
 }
 
 variable "gateway_name" {
@@ -41,12 +51,25 @@ variable "gateway_name" {
   default     = "tf-internet-gateway"
 }
 
-variable "sg_name" {
+variable "public_route_table_name" {
+  description = "Public route table name"
+  type        = string
+}
+
+// Security Group
+variable "security_group_name" {
   description = "Nombre del Security Group"
   type        = string
   default     = "tf-main-sg"
 }
 
+variable "security_group_id" {
+    description = "ID del Security Group"
+    type        = string
+    default     = "tf-main-sg"
+}
+
+// SNS
 variable "sns_topic_name" {
     description = "Nombre del topic SNS"
     type        = string
@@ -62,32 +85,28 @@ variable "subscriber_email_lambda" {
   description = "Correo electrónico para el SNS del lambda"
   type = string
 }
+
 variable "sns_lambda_topic_name" {
   description = "Nombre del SNS para lambda"
   type = string
 }
 
+// Mi IP
 variable "my_ip" {
   description = "My IP"
   type        = string
 }
 
-variable "ec2_name" {
-  description = "EC2 instance name"
-  type        = string
-}
-
+// AMI ID (Imagen EC2)
 variable "ami_id" {
   description = "AMI id"
   type        = string
 }
 
-variable "public_route_table_name" {
-  description = "Public route table name"
-  type        = string
-}
 
+// LLave SSH
 variable "key_name" {
   description = "Key pair name"
   type        = string
+  default = "test_key"
 }

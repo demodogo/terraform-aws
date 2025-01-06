@@ -27,7 +27,7 @@ module "vpc" {
 module "sg" {
   source = "./modules/sg"
   vpc_id = module.vpc.vpc_id
-  name   = var.sg_name
+  name   = var.security_group_name
   my_ip  = var.my_ip
 }
 

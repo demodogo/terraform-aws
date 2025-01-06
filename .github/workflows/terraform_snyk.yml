@@ -1,0 +1,32 @@
+name: Terraform Snyk Scan
+on:
+  push:
+    branches:
+      - test-no-vars
+jobs:
+  run-snyk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.5.0
+      - name: Terraform Scan
+        uses: snyk/actions/iac@master
+        continue-on-error: true
+        with:
+          file: terraform/
+          json: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  dispatch-ec2-workflow:
+    needs:
+      - run-snyk
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger EC2 Workflow
+        uses: pauldraper/workflow-dispatch@v1.6
+        with:
+          workflow: terraform_ec2.yml
