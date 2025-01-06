@@ -323,3 +323,12 @@ jobs:
           -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_network_in \
           -target=module.cloudwatch.aws_cloudwatch_metric_alarm.status_check_failed
 
+  dispatch-ecr-workflow:
+    needs:
+      - create-cloudwatch-alarms
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger ECR Workflow
+        uses: pauldraper/workflow-dispatch@v1.6
+        with:
+          workflow: terraform_ecr.yml
