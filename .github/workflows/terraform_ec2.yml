@@ -135,7 +135,7 @@ jobs:
 
   setup-security-group:
     needs:
-      - setup-vpc
+      - setup-vpc-resources
     runs-on: ubuntu-latest
     outputs:
       security_group_id: ${{ steps.get-sg-id.outputs.security_group_id }}

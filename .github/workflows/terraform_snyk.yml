@@ -21,7 +21,7 @@ jobs:
           json: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-  dispatch-iam-ec2:
+  dispatch-ec2-workflow:
     needs:
       - run-snyk
     runs-on: ubuntu-latest
