@@ -113,6 +113,8 @@ jobs:
     needs:
       - setup-vpc-resources
     runs-on: ubuntu-latest
+    outputs:
+      security_group_id: ${{ steps.get-sg-id.outputs.security_group_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -141,10 +143,18 @@ jobs:
         id: terraform-apply-sg
         run: terraform -chdir=terraform apply -auto-approve -target=module.sg
 
+      - name: Get Security Group ID
+        id: get-sg-id
+        run: |
+          SECURITY_GROUP_ID=$(terraform -chdir=terraform output -raw security_group_id)
+          echo "security_group_id=$SECURITY_GROUP_ID" >> $GITHUB_OUTPUT
+
   setup-and-deploy-ec2:
     runs-on: ubuntu-latest
     needs:
       - setup-security-group
+    env:
+      security_group_id: ${{ needs.setup-security-group.outputs.security_group_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -237,7 +247,7 @@ jobs:
             --exclude 'terraform' \
             --exclude 'ddg-dl-temp' \
             --exclude 'ddg-dl-temp.pub' \
-            -e "ssh -i ddg-dl-temp -o StrictHostKeyChecking=no" ./ ec2-user@${{env.instance_public_ip }}:/home/ec2-user/app/
+            -e "ssh -i ddg-dl-temp -o StrictHostKeyChecking=no" ./ ec2-user@${{ env.instance_public_ip }}:/home/ec2-user/app/
 
       - name: Desplegar aplicación en EC2
         run: |
