@@ -1,0 +1,23 @@
+name: Workflow 2 Receive Variables
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: "Message from Workflow 1"
+        required: true
+        type: string
+      runId:
+        description: "Run ID of Workflow 1"
+        required: true
+        type: string
+
+jobs:
+  process-variables:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Echo received variables
+        run: |
+          echo "Message from Workflow 1: ${{ github.event.inputs.message }}"
+          echo "Triggered by Workflow 1 Run ID: ${{ github.event.inputs.runId }}"
