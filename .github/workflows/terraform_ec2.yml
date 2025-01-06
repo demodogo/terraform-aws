@@ -325,10 +325,10 @@ jobs:
 
   dispatch-ecr-workflow:
     needs:
-      - create-cloudwatch-alarms
+      - run-snyk
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger ECR Workflow
+      - name: Trigger EC2 Workflow
         uses: pauldraper/workflow-dispatch@v1.6
         with:
           workflow: terraform_ecr.yml
