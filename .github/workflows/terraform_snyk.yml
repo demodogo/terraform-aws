@@ -2,7 +2,7 @@ name: Terraform Snyk Scan
 on:
   push:
     branches:
-      - main
+      - test-no-vars
 jobs:
   run-snyk:
     runs-on: ubuntu-latest
