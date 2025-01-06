@@ -28,6 +28,7 @@ variable "public_subnet_cidr_block" {
   type        = string
 }
 
+
 variable "private_subnet_cidr_block" {
   description = "Rango CIDR para la subnet privada"
   type        = string
@@ -42,7 +43,7 @@ variable "vpc_name" {
 variable "vpc_id" {
   description = "ID de la VPC"
   type        = string
-  nullable = true
+  default = ""
 }
 
 variable "public_subnet_name" {
@@ -54,13 +55,13 @@ variable "public_subnet_name" {
 variable "public_subnet_id" {
   description = "ID de la subnet pública"
   type        = string
-  nullable = true
+  default = ""
 }
 
 variable "private_subnet_name" {
   description = "Nombre de la subnet privada"
   type        = string
-  nullable = true
+  default: "tf-private-subnet"
 }
 
 variable "gateway_name" {
