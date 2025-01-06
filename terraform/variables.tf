@@ -4,9 +4,15 @@ variable "aws_region" {
   type        = string
 }
 
-// IAM
+// EC2
 variable "iam_instance_profile" {
   description = "IAM instance profile"
+  type        = string
+  default = "ec2-cloudwatch-logs-profile"
+}
+
+variable "ec2_name" {
+  description = "EC2 instance name"
   type        = string
 }
 
@@ -35,6 +41,7 @@ variable "vpc_name" {
 variable "vpc_id" {
   description = "ID de la VPC"
   type        = string
+  default     = "tf-vpc"
 }
 
 variable "public_subnet_name" {
@@ -67,6 +74,12 @@ variable "gateway_name" {
   default     = "tf-internet-gateway"
 }
 
+variable "public_route_table_name" {
+  description = "Public route table name"
+  type        = string
+}
+
+// Security Group
 variable "security_group_name" {
   description = "Nombre del Security Group"
   type        = string
@@ -76,7 +89,10 @@ variable "security_group_name" {
 variable "security_group_id" {
     description = "ID del Security Group"
     type        = string
+    default     = "tf-main-sg"
 }
+
+// SNS
 variable "sns_topic_name" {
     description = "Nombre del topic SNS"
     type        = string
@@ -92,32 +108,27 @@ variable "subscriber_email_lambda" {
   description = "Correo electrónico para el SNS del lambda"
   type = string
 }
+
 variable "sns_lambda_topic_name" {
   description = "Nombre del SNS para lambda"
   type = string
 }
 
+// Mi IP
 variable "my_ip" {
   description = "My IP"
   type        = string
 }
 
-variable "ec2_name" {
-  description = "EC2 instance name"
-  type        = string
-}
-
+// AMI ID (Imagen EC2)
 variable "ami_id" {
   description = "AMI id"
   type        = string
 }
 
-variable "public_route_table_name" {
-  description = "Public route table name"
-  type        = string
-}
-
+// LLave SSH
 variable "key_name" {
   description = "Key pair name"
   type        = string
+  default = "test_key"
 }
