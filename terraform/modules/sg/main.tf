@@ -8,7 +8,7 @@ resource "aws_security_group" "dl-main-sg" {
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Permite acceso desde cualquier IP
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {

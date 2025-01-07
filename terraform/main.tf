@@ -84,22 +84,16 @@ module "ec2" {
   security_group_id = module.sg.security_group_id
   name              = var.ec2_name
   key_name          = var.key_name
-
   depends_on = [module.iam]
-
 }
 
 module "cloudwatch" {
   source = "./modules/cloudwatch"
   instance_id = module.ec2.instance_id
   sns_topic_arn = module.sns.sns_topic_arn
+  depends_on = [module.ec2, module.sns]
 }
 
 module "sqs" {
   source = "./modules/sqs"
 }
-
-/*resource "aws_key_pair" "test_key" {
-  key_name   = "test_key"
-  public_key = file("${path.root}/test_key.pub")
-}*/

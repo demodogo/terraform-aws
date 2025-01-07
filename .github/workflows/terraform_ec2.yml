@@ -199,6 +199,7 @@ jobs:
           -target=module.ec2 \
           -var "key_name=${{ steps.get-key-name.outputs.key_name }}"
       - name: Get EC2 Public IP
+
         id: get-public-ip
         run: |
           INSTANCE_PUBLIC_IP=$(terraform -chdir=terraform output -raw instance_public_ip)
@@ -208,6 +209,7 @@ jobs:
         run: |
           INSTANCE_ID=$(terraform -chdir=terraform output -raw instance_id)
           echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+
       - name: Get Runner IP Address
         id: runner_ip
         uses: haythem/public-ip@v1.3
