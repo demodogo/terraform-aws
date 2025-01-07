@@ -14,7 +14,6 @@ resource "aws_instance" "ec2_api_instance" {
       iam_instance_profile,
       vpc_security_group_ids,
       associate_public_ip_address,
-      public_ip
     ]
   }
 
