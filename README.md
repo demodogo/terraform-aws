@@ -33,6 +33,7 @@
   | Nombre       | Descripción                   |
     |:-------------|:------------------------------|
     | `AWS_REGION` | La región de tu cuenta *AWS*. |
+  
 * *Terraform State Bucket*: Accede a la consola de *AWS* (desde tu perfil) y crea un *bucket S3* para almacenar el backend de *Terraform*.
     
 
