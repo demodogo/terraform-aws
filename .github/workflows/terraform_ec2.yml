@@ -144,7 +144,7 @@ jobs:
         run: |
           SECURITY_GROUP_ID=$(terraform -chdir=terraform output -raw security_group_id)
           echo "security_group_id=$SECURITY_GROUP_ID" >> $GITHUB_OUTPUT
-  setup-and-deploy-ec2:
+  setup-and-deploy-ec2-and-alarms:
     runs-on: ubuntu-latest
     needs:
       - setup-security-group
@@ -171,12 +171,13 @@ jobs:
         id: get-key-name
         run: |
           KEY_NAME=temp-key-${{ github.run_id }}
-          echo "key_name=$KEY_NAME" >> $GITHUB_OUTPUT
+          echo "key_name=$KEY_NAME" >> $GITHUB_ENV
       - name: Import Public Key to AWS
         run: |
           aws ec2 import-key-pair \
             --key-name ${{ steps.get-key-name.outputs.key_name }} \
             --public-key-material "$(base64 -w 0 ddg-dl-temp.pub)"
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -188,18 +189,29 @@ jobs:
 
       - name: Terraform Plan (EC2)
         id: terraform-plan-ec2
-        run: |
-          terraform -chdir=terraform plan \
-          -target=module.ec2 \
-          -var "key_name=${{ steps.get-key-name.outputs.key_name }}"
+        run: >
+          terraform -chdir=terraform plan
+          -var "key_name=${{ env.key_name }}"
+          -target=module.ec2
+          -target=module.sns.aws_sns_topic.alarm_notifications
+          -target=module.sns.aws_sns_topic_subscription.email_subscription
+          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage
+          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_network_in
+          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.status_check_failed
+
       - name: Terraform Apply (EC2)
         id: terraform-apply-ec2
-        run: |
-          terraform -chdir=terraform apply -auto-approve \
-          -target=module.ec2 \
-          -var "key_name=${{ steps.get-key-name.outputs.key_name }}"
-      - name: Get EC2 Public IP
+        run: >
+          terraform -chdir=terraform plan
+          -var "key_name=${{ env.key_name }}"
+          -target=module.ec2
+          -target=module.sns.aws_sns_topic.alarm_notifications
+          -target=module.sns.aws_sns_topic_subscription.email_subscription
+          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage
+          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_network_in
+          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.status_check_failed
 
+      - name: Get EC2 Public IP
         id: get-public-ip
         run: |
           INSTANCE_PUBLIC_IP=$(terraform -chdir=terraform output -raw instance_public_ip)
@@ -209,7 +221,6 @@ jobs:
         run: |
           INSTANCE_ID=$(terraform -chdir=terraform output -raw instance_id)
           echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
-
       - name: Get Runner IP Address
         id: runner_ip
         uses: haythem/public-ip@v1.3
@@ -221,6 +232,7 @@ jobs:
             --protocol tcp \
             --port 22 \
             --cidr ${{ steps.runner_ip.outputs.ipv4 }}/32
+
       - name: Esperar a que la instancia EC2 esté disponible
         run: |
           aws ec2 wait instance-status-ok --instance-ids ${{ env.instance_id }}
@@ -253,6 +265,7 @@ jobs:
             pm2 startup
             echo "Aplicación desplegada"
           EOF
+
       - name: Verificar que la API está activa
         continue-on-error: true
         run: |
@@ -260,51 +273,7 @@ jobs:
       - name: Eliminar claves SSH temporales
         run: |
           rm -f ddg-dl-temp ddg-dl-temp.pub
-  create-cloudwatch-alarms:
-    needs: setup-and-deploy-ec2
-    runs-on: ubuntu-latest
-    env:
-      key_name: ${{ needs.setup-and-deploy-ec2.outputs.key_name }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
 
-      - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.0
-          terraform_wrapper: true
-
-      - name: Terraform Init
-        run: terraform -chdir=terraform init
-
-      - name: Terraform Plan (CloudWatch Alarms for EC2 including SNS Topic)
-        id: terraform-plan-alarms
-        run: |
-          terraform -chdir=terraform plan \
-          -var "key_name=${{ env.key_name }}" \
-          -target=module.sns.aws_sns_topic.alarm_notifications \
-          -target=module.sns.aws_sns_topic_subscription.email_subscription \
-          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage \
-          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_network_in \
-          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.status_check_failed
-      - name: Terraform Apply (CloudWatch Alarms for EC2 including SNS Topic)
-        id: terraform-apply-alarms
-        run: |
-          terraform -chdir=terraform apply -auto-approve \
-          -var "key_name=${{ env.key_name }}" \
-          -target=module.sns.aws_sns_topic.alarm_notifications \
-          -target=module.sns.aws_sns_topic_subscription.email_subscription \
-          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_cpu_usage \
-          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.high_network_in \
-          -target=module.cloudwatch.aws_cloudwatch_metric_alarm.status_check_failed
   dispatch-ecr-workflow:
     needs:
       - create-cloudwatch-alarms

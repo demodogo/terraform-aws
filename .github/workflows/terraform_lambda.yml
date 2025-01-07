@@ -147,7 +147,7 @@ jobs:
           terraform -chdir=terraform plan \
           -target=module.lambda
 
-      - name: Terraform Apply (lambda)
+      - name: Terraform Apply (Lambda)
         id: terraform-apply-lambda
         run: |
           terraform -chdir=terraform apply -auto-approve \

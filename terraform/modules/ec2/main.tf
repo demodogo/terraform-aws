@@ -6,6 +6,20 @@ resource "aws_instance" "ec2_api_instance" {
   key_name = var.key_name
   iam_instance_profile = var.iam_instance_profile
 
+  lifecycle {
+    ignore_changes = [
+      security_groups,
+      subnet_id,
+      tags,
+      iam_instance_profile,
+      vpc_security_group_ids,
+      associate_public_ip_address,
+      primary_network_interface_id,
+      public_dns,
+      public_ip
+    ]
+  }
+
   user_data = <<-EOT
               #!/bin/bash
               yum update -y

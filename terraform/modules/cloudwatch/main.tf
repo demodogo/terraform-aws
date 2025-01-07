@@ -9,11 +9,6 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu_usage" {
   statistic           = "Average"
   threshold           = 80
   alarm_actions       = [var.sns_topic_arn]
-  lifecycle {
-    ignore_changes = [
-      dimensions,
-    ]
-  }
 
   dimensions = {
     InstanceId = var.instance_id
@@ -33,12 +28,6 @@ resource "aws_cloudwatch_metric_alarm" "high_network_in" {
   threshold           = 1000000
   alarm_actions       = [var.sns_topic_arn]
 
-  lifecycle {
-    ignore_changes = [
-      dimensions,
-    ]
-  }
-
   dimensions = {
     InstanceId = var.instance_id
   }
@@ -55,12 +44,6 @@ resource "aws_cloudwatch_metric_alarm" "status_check_failed" {
   statistic           = "Maximum"
   threshold           = 1
   alarm_actions       = [var.sns_topic_arn]
-
-  lifecycle {
-    ignore_changes = [
-      dimensions,
-    ]
-  }
 
   dimensions = {
     InstanceId = var.instance_id
